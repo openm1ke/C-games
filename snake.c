@@ -194,7 +194,6 @@ struct s_snake *draw_garden(struct s_apple *apple, struct s_snake *snake, int *s
         *lives -= 1;
         destroy(tmp);
         tmp = init_snake();
-        destroy(snake);
     }
 
     struct s_snake * temp = tmp;
