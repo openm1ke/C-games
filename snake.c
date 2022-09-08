@@ -136,7 +136,7 @@ void check(struct s_game * game) {
     printf("Head of snake - %p, direction = %d\n", get_snake_head(game->snake), game->snake->direction);
     snake_destroy(game->snake);
     game->snake = init_snake();
-    add_snake(game->snake, -1);
+    add_snake(game->snake, 1);
 
     temp = game->snake;
     while(temp != NULL) {
@@ -145,6 +145,25 @@ void check(struct s_game * game) {
     }
 
     game->lives--;
+
+    printf("Lives %d\n", game->lives);
+    apple_destroy(game->apple);
+    usleep(1000000);
+    game->apple = init_apple();
+
+    printf("apple x = %d, apple y = %d\n", game->apple->x, game->apple->y);
+
+    printf("Head out function = %p, direction = %d\n", game->snake, game->snake->direction);
+    struct s_snake * head = get_snake_head(game->snake);
+    add_snake(head, 1);
+
+    temp = game->snake;
+    while(temp != NULL) {
+        printf("address = %p, x = %d, y = %d, direction = %d\n", temp, temp->x, temp->y, temp->direction);
+        temp = temp->next;
+    }
+
+
 }
 
 int main() {
@@ -167,22 +186,7 @@ int main() {
 
     check(&game);
 
-    printf("Lives %d\n", game.lives);
-    apple_destroy(game.apple);
-    usleep(1000000);
-    game.apple = init_apple();
 
-    printf("apple x = %d, apple y = %d\n", game.apple->x, game.apple->y);
-
-    printf("Head out function = %p, direction = %d\n", game.snake, game.snake->direction);
-    struct s_snake * head = get_snake_head(game.snake);
-    add_snake(head, -1);
-    struct s_snake * temp;
-    temp = game.snake;
-    while(temp != NULL) {
-        printf("address = %p, x = %d, y = %d, direction = %d\n", temp, temp->x, temp->y, temp->direction);
-        temp = temp->next;
-    }
 
 
 
