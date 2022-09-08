@@ -35,7 +35,6 @@ struct s_snake * draw_garden(struct s_apple *, struct s_snake *, int *, int *);
 struct s_snake * init_snake();
 void move_snake(struct s_snake *);
 struct s_snake * get_snake_head(struct s_snake *);
-//void draw_snake(struct s_snake *);
 struct s_apple draw_apple();
 struct s_snake * grow_snake(struct s_snake *);
 
@@ -48,10 +47,7 @@ int main() {
 
     struct s_snake * snake;
     snake = init_snake();
-    printf("%p - start", snake);
-
     struct s_snake * snake_head = get_snake_head(snake);
-
     struct s_apple apple = draw_apple();
 
     if (!isatty(STDIN_FILENO)) {
@@ -75,12 +71,13 @@ int main() {
         system("clear");
 
         snake = draw_garden(&apple, snake, &scores, &lives);
-
         move_snake(snake);
+        snake_head = get_snake_head(snake);
+
         if (lives <= 0) break;
         usleep(time);
     }
-
+    free(snake);
 
     return 0;
 }
@@ -95,7 +92,7 @@ struct s_snake * get_snake_head(struct s_snake * head) {
 
 void move_snake(struct s_snake * snake) {
     struct s_snake * snake_tail = snake;
-    while(snake_tail != NULL) {
+    while (snake_tail != NULL) {
         switch (snake_tail->direction) {
             case 1:
                 snake_tail->x++;
@@ -112,7 +109,7 @@ void move_snake(struct s_snake * snake) {
             default:
                 break;
         }
-        if(snake_tail->next)
+        if (snake_tail->next)
             snake_tail->direction = snake_tail->next->direction;
         snake_tail = snake_tail->next;
     }
@@ -182,7 +179,6 @@ struct s_snake * grow_snake(struct s_snake * snake) {
     return new_chain;
 }
 struct s_snake * draw_garden(struct s_apple * apple, struct s_snake * snake, int * scores, int * lives) {
-
     struct s_snake * tmp = snake;
     struct s_snake * snake_head = get_snake_head(tmp);
 
@@ -191,12 +187,26 @@ struct s_snake * draw_garden(struct s_apple * apple, struct s_snake * snake, int
         *scores += 10;
         snake = grow_snake(tmp);
         snake_head = get_snake_head(snake);
+        free(tmp);
     }
 
-    if (snake_head->x == WIDTH - 1 || snake_head->x == 0 || snake_head->y == HEIGHT - 1 || snake_head->y == 0) {
+    if (snake_head->x == WIDTH - 1 || snake_head->x == 0
+    || snake_head->y == HEIGHT - 1 || snake_head->y == 0) {
         free(snake);
         snake = init_snake();
+        snake_head = get_snake_head(snake);
         *lives -= 1;
+    }
+    tmp = snake;
+    while (tmp != NULL) {
+        if (snake_head->x == tmp->x && snake_head->y == tmp->y && snake_head != tmp) {
+            free(snake);
+            snake = init_snake();
+            snake_head = get_snake_head(snake);
+            *lives -= 1;
+            break;
+        }
+        tmp = tmp->next;
     }
 
     printf("%s: %d\t%s: %d\n", SCORES, *scores, LIVES, *lives);
@@ -204,14 +214,14 @@ struct s_snake * draw_garden(struct s_apple * apple, struct s_snake * snake, int
     for (int line = 0; line < HEIGHT; line++) {
         for (int column = 0; column < WIDTH; column++) {
             tmp = snake;
-            while(tmp != NULL) {
-                if(line == tmp->y && column == tmp->x) {
+            while (tmp != NULL) {
+                if (line == tmp->y && column == tmp->x) {
                     putchar(SNAKE);
                     break;
                 }
                 tmp = tmp->next;
             }
-            if(tmp) {
+            if (tmp) {
                 continue;
             }
 
@@ -230,6 +240,5 @@ struct s_snake * draw_garden(struct s_apple * apple, struct s_snake * snake, int
         }
         putchar(NEWLINE);
     }
-
     return snake;
 }
