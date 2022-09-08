@@ -31,6 +31,15 @@ struct s_snake {
     struct s_snake *next;
 };
 
+struct s_game {
+    int scores;
+    int lives;
+    int speed;
+    struct s_apple * apple;
+    struct s_snake * snake;
+};
+
+
 struct s_snake *draw_garden(struct s_apple *, struct s_snake *, int *, int *);
 struct s_snake *init_snake();
 void move_snake(struct s_snake *);
@@ -38,14 +47,104 @@ struct s_snake *get_snake_head(struct s_snake *);
 struct s_apple draw_apple();
 struct s_snake *grow_snake(struct s_snake *);
 void destroy(struct s_snake *);
+struct s_apple * init_apple();
+
+
+struct s_apple * init_apple() {
+    struct s_apple * apple;
+    apple = malloc(sizeof (struct s_apple));
+    srand(time(0));
+    apple->x = (rand() % (WIDTH - 2)) + 1;
+    apple->y = (rand() % (HEIGHT - 2)) + 1;
+    return apple;
+}
+
+void snake_destroy(struct s_snake * head) {
+    struct s_snake * temp = head, *next;
+    while (temp != NULL) {
+        next = temp->next;
+        free(temp);
+        temp = next;
+    }
+    free(next);
+}
+
+void apple_destroy(struct s_apple * apple) {
+    free(apple);
+    apple = NULL;
+}
+
+struct s_snake * add_snake(struct s_snake * head) {
+    struct s_snake * new;
+    new = malloc(sizeof (struct s_snake));
+    new->x = head->x + 1;
+    new->y = head->y;
+    new->direction = head->direction;
+    new->next = NULL;
+    head->next = new;
+    return new;
+}
+
+
+void check(struct s_game * game) {
+    struct s_snake * second, * third;
+    second = add_snake(game->snake);
+    third = add_snake(second);
+    add_snake(third);
+
+
+    struct s_snake * temp;
+    temp = game->snake;
+    while(temp != NULL) {
+        printf("address = %p, x = %d, y = %d\n", temp, temp->x, temp->y);
+        temp = temp->next;
+    }
+
+    printf("apple x = %d, apple y = %d\n", game->apple->x, game->apple->y);
+
+    temp = game->snake;
+    //snake_destroy(temp);
+    game->snake = NULL;
+    game->snake = init_snake();
+
+    temp = game->snake;
+    while(temp != NULL) {
+        printf("address = %p, x = %d, y = %d\n", temp, temp->x, temp->y);
+        temp = temp->next;
+    }
+
+    game->lives--;
+}
 
 int main() {
     char c = ' ';
     int n = 0;
-    int time = 100000;
+    int timer = 1000000;
     int scores = 0;
     int lives = 3;
 
+
+    struct s_game game;
+    game.scores = 0;
+    game.lives = 3;
+    game.speed = 1000000;
+    //srand(time(0));
+
+    game.apple = init_apple();
+    game.snake = init_snake();
+
+
+
+    check(&game);
+    printf("Lives %d\n", game.lives);
+    //apple_destroy(game.apple);
+    usleep(1000000);
+
+    game.apple = init_apple();
+
+    printf("apple x = %d, apple y = %d\n", game.apple->x, game.apple->y);
+
+    exit(0);
     struct s_snake *snake;
     snake = init_snake();
 
@@ -63,8 +162,8 @@ int main() {
     while (c != 'q') {
         if (ioctl(0, FIONREAD, &n) == 0 && n > 0) {
             c = getchar();
-            if (c == '=') time /= 10;
-            if (c == '-') time *= 10;
+            if (c == '=') timer /= 2;
+            if (c == '-') timer *= 2;
             if (c == 'd') snake_head->direction = 1;
             if (c == 's') snake_head->direction = 2;
             if (c == 'a') snake_head->direction = 3;
@@ -78,7 +177,7 @@ int main() {
         move_snake(snake);
 
         if (lives <= 0) break;
-        usleep(time);
+        usleep(timer);
     }
     free(snake);
     return 0;
@@ -118,14 +217,15 @@ void move_snake(struct s_snake *snake) {
 
 struct s_snake *init_snake() {
     struct s_snake * snake;
-    snake = calloc(4, sizeof(struct s_snake));
+    snake = malloc(sizeof(struct s_snake));
     int d = 1;
     int x = WIDTH / 4;
     int y = HEIGHT - HEIGHT / 4;
-    snake[0].x = x;
-    snake[0].y = y;
-    snake[0].direction = d;
-    snake[0].next = &snake[1];
+    snake->x = x;
+    snake->y = y;
+    snake->direction = d;
+    snake->next = NULL;
+    /*&snake[1];
     snake[1].x = x + 1;
     snake[1].y = y;
     snake[1].direction = d;
@@ -137,7 +237,7 @@ struct s_snake *init_snake() {
     snake[3].x = x + 3;
     snake[3].y = y;
     snake[3].direction = d;
-    snake[3].next = NULL;
+    snake[3].next = NULL;*/
 
     return snake;
 }
