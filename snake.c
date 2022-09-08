@@ -67,6 +67,7 @@ void snake_destroy(struct s_snake * head) {
         temp = next;
     }
     free(next);
+    head = NULL;
 }
 
 void apple_destroy(struct s_apple * apple) {
@@ -74,12 +75,28 @@ void apple_destroy(struct s_apple * apple) {
     apple = NULL;
 }
 
-struct s_snake * add_snake(struct s_snake * head) {
+struct s_snake * add_snake(struct s_snake * head, int flag) {
     struct s_snake * new;
     new = malloc(sizeof (struct s_snake));
-    new->x = head->x + 1;
-    new->y = head->y;
     new->direction = head->direction;
+    switch (new->direction) {
+        case 1:
+            new->x = head->x - 1 * flag;
+            new->y = head->y;
+            break;
+        case 2:
+            new->x = head->x;
+            new->y = head->y - 1 * flag;
+            break;
+        case 3:
+            new->x = head->x + 1 * flag;
+            new->y = head->y;
+            break;
+        case 4:
+            new->x = head->x;
+            new->y = head->y + 1 * flag;
+            break;
+    }
     new->next = NULL;
     head->next = new;
     return new;
@@ -87,29 +104,43 @@ struct s_snake * add_snake(struct s_snake * head) {
 
 
 void check(struct s_game * game) {
-    struct s_snake * second, * third;
-    second = add_snake(game->snake);
-    third = add_snake(second);
-    add_snake(third);
-
-
     struct s_snake * temp;
+    add_snake(add_snake(add_snake(game->snake, -1), -1), -1);
+
     temp = game->snake;
     while(temp != NULL) {
-        printf("address = %p, x = %d, y = %d\n", temp, temp->x, temp->y);
+        printf("address = %p, x = %d, y = %d, direction = %d\n", temp, temp->x, temp->y, temp->direction);
         temp = temp->next;
     }
 
-    printf("apple x = %d, apple y = %d\n", game->apple->x, game->apple->y);
-
+    temp = get_snake_head(game->snake);
+    temp->direction = 2;
+    move_snake(game->snake);
+    printf("Change direction\n");
     temp = game->snake;
-    //snake_destroy(temp);
-    game->snake = NULL;
+    while(temp != NULL) {
+        printf("address = %p, x = %d, y = %d, direction = %d\n", temp, temp->x, temp->y, temp->direction);
+        temp = temp->next;
+    }
+
+    move_snake(game->snake);
+    printf("Change direction\n");
+    temp = game->snake;
+    while(temp != NULL) {
+        printf("address = %p, x = %d, y = %d, direction = %d\n", temp, temp->x, temp->y, temp->direction);
+        temp = temp->next;
+    }
+
+
+    printf("apple x = %d, apple y = %d\n", game->apple->x, game->apple->y);
+    printf("Head of snake - %p, direction = %d\n", get_snake_head(game->snake), game->snake->direction);
+    snake_destroy(game->snake);
     game->snake = init_snake();
+    add_snake(game->snake, -1);
 
     temp = game->snake;
     while(temp != NULL) {
-        printf("address = %p, x = %d, y = %d\n", temp, temp->x, temp->y);
+        printf("address = %p, x = %d, y = %d, direction = %d\n", temp, temp->x, temp->y, temp->direction);
         temp = temp->next;
     }
 
@@ -117,41 +148,48 @@ void check(struct s_game * game) {
 }
 
 int main() {
+    /*
     char c = ' ';
     int n = 0;
     int timer = 1000000;
     int scores = 0;
-    int lives = 3;
+    int lives = 3;*/
 
 
     struct s_game game;
     game.scores = 0;
     game.lives = 3;
     game.speed = 1000000;
-    //srand(time(0));
-
     game.apple = init_apple();
     game.snake = init_snake();
 
 
 
     check(&game);
-    printf("Lives %d\n", game.lives);
-    //apple_destroy(game.apple);
-    usleep(1000000);
 
+    printf("Lives %d\n", game.lives);
+    apple_destroy(game.apple);
+    usleep(1000000);
     game.apple = init_apple();
 
     printf("apple x = %d, apple y = %d\n", game.apple->x, game.apple->y);
 
-    exit(0);
-    struct s_snake *snake;
-    snake = init_snake();
+    printf("Head out function = %p, direction = %d\n", game.snake, game.snake->direction);
+    struct s_snake * head = get_snake_head(game.snake);
+    add_snake(head, -1);
+    struct s_snake * temp;
+    temp = game.snake;
+    while(temp != NULL) {
+        printf("address = %p, x = %d, y = %d, direction = %d\n", temp, temp->x, temp->y, temp->direction);
+        temp = temp->next;
+    }
 
 
-    struct s_snake *snake_head = get_snake_head(snake);
-    struct s_apple apple = draw_apple();
 
+
+
+
+    /*
     if (!isatty(STDIN_FILENO)) {
         if (freopen("/dev/tty", "r", stdin) == NULL) {
             printf("Cannot open the file");
@@ -162,27 +200,37 @@ int main() {
     while (c != 'q') {
         if (ioctl(0, FIONREAD, &n) == 0 && n > 0) {
             c = getchar();
-            if (c == '=') timer /= 2;
-            if (c == '-') timer *= 2;
-            if (c == 'd') snake_head->direction = 1;
-            if (c == 's') snake_head->direction = 2;
-            if (c == 'a') snake_head->direction = 3;
-            if (c == 'w') snake_head->direction = 4;
+            if (c == '=') game.speed /= 2;
+            if (c == '-') game.speed *= 2;
+            if (c == 'd') get_snake_head(game.snake)->direction = 1;
+            if (c == 's') get_snake_head(game.snake)->direction = 2;
+            if (c == 'a') get_snake_head(game.snake)->direction = 3;
+            if (c == 'w') get_snake_head(game.snake)->direction = 4;
             if (c == 'q') break;
         }
         system("clear");
 
-        snake = draw_garden(&apple, snake, &scores, &lives);
-        snake_head = get_snake_head(snake);
-        move_snake(snake);
+        //snake = draw_garden(&apple, snake, &scores, &lives);
+        //snake_head = get_snake_head(snake);
+
+        move_snake(game.snake);
 
         if (lives <= 0) break;
         usleep(timer);
     }
-    free(snake);
+    */
+
+    apple_destroy(game.apple);
+    snake_destroy(game.snake);
+
+
     return 0;
 }
+/*
+void view(struct s_game * game) {
 
+}
+*/
 struct s_snake *get_snake_head(struct s_snake *head) {
     struct s_snake *temp = head;
     while (temp->next != NULL) {
