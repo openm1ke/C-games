@@ -41,7 +41,7 @@ struct s_snake * grow_snake(struct s_snake *);
 int main() {
     char c = ' ';
     int n = 0;
-    int time = 1000000;
+    int time = 100000;
     int scores = 0;
     int lives = 3;
 
@@ -60,8 +60,8 @@ int main() {
     while (c != 'q') {
         if (ioctl(0, FIONREAD, &n) == 0 && n > 0) {
             c = getchar();
-            if (c == '=') time /= 2;
-            if (c == '-') time *= 2;
+            if (c == '=') time /= 10;
+            if (c == '-') time *= 10;
             if (c == 'd') snake_head->direction = 1;
             if (c == 's') snake_head->direction = 2;
             if (c == 'a') snake_head->direction = 3;
@@ -71,8 +71,8 @@ int main() {
         system("clear");
 
         snake = draw_garden(&apple, snake, &scores, &lives);
-        move_snake(snake);
         snake_head = get_snake_head(snake);
+        move_snake(snake);
 
         if (lives <= 0) break;
         usleep(time);
@@ -202,7 +202,6 @@ struct s_snake * draw_garden(struct s_apple * apple, struct s_snake * snake, int
         if (snake_head->x == tmp->x && snake_head->y == tmp->y && snake_head != tmp) {
             free(snake);
             snake = init_snake();
-            snake_head = get_snake_head(snake);
             *lives -= 1;
             break;
         }
