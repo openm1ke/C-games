@@ -37,6 +37,7 @@ void move_snake(struct s_snake *);
 struct s_snake *get_snake_head(struct s_snake *);
 struct s_apple draw_apple();
 struct s_snake *grow_snake(struct s_snake *);
+void destroy(struct s_snake *);
 
 int main() {
     char c = ' ';
@@ -47,6 +48,8 @@ int main() {
 
     struct s_snake *snake;
     snake = init_snake();
+
+
     struct s_snake *snake_head = get_snake_head(snake);
     struct s_apple apple = draw_apple();
 
@@ -78,7 +81,6 @@ int main() {
         usleep(time);
     }
     free(snake);
-
     return 0;
 }
 
@@ -115,8 +117,8 @@ void move_snake(struct s_snake *snake) {
 }
 
 struct s_snake *init_snake() {
-    struct s_snake *snake;
-    snake = malloc(4 * sizeof(struct s_snake));
+    struct s_snake * snake;
+    snake = calloc(4, sizeof(struct s_snake));
     int d = 1;
     int x = WIDTH / 4;
     int y = HEIGHT - HEIGHT / 4;
@@ -124,21 +126,19 @@ struct s_snake *init_snake() {
     snake[0].y = y;
     snake[0].direction = d;
     snake[0].next = &snake[1];
-
     snake[1].x = x + 1;
     snake[1].y = y;
     snake[1].direction = d;
     snake[1].next = &snake[2];
-
     snake[2].x = x + 2;
     snake[2].y = y;
     snake[2].direction = d;
     snake[2].next = &snake[3];
-
     snake[3].x = x + 3;
     snake[3].y = y;
     snake[3].direction = d;
     snake[3].next = NULL;
+
     return snake;
 }
 
@@ -151,8 +151,7 @@ struct s_apple draw_apple() {
 }
 
 struct s_snake *grow_snake(struct s_snake *snake) {
-    struct s_snake *new_chain;
-    new_chain = malloc(sizeof(struct s_snake));
+    struct s_snake *new_chain = malloc(sizeof (struct s_snake));
     new_chain->next = snake;
     new_chain->x = snake->x;
     new_chain->y = snake->y;
@@ -173,9 +172,13 @@ struct s_snake *grow_snake(struct s_snake *snake) {
         default:
             break;
     }
-
     return new_chain;
 }
+
+void destroy(struct s_snake * snake) {
+    free(snake);
+}
+
 struct s_snake *draw_garden(struct s_apple *apple, struct s_snake *snake, int *scores, int *lives) {
     struct s_snake *tmp = snake;
     struct s_snake *snake_head = get_snake_head(tmp);
@@ -183,43 +186,41 @@ struct s_snake *draw_garden(struct s_apple *apple, struct s_snake *snake, int *s
     if (snake_head->x == apple->x && snake_head->y == apple->y) {
         *apple = draw_apple();
         *scores += 10;
-        snake = grow_snake(tmp);
-        snake_head = get_snake_head(snake);
-        free(tmp);
-        tmp = snake;
+        tmp = grow_snake(snake);
     }
 
     if (snake_head->x == WIDTH - 1 || snake_head->x == 0 || snake_head->y == HEIGHT - 1 ||
         snake_head->y == 0) {
-        free(snake);
-        snake = init_snake();
-        snake_head = get_snake_head(snake);
         *lives -= 1;
+        destroy(tmp);
+        tmp = init_snake();
+        destroy(snake);
     }
-    tmp = snake;
-    while (tmp != NULL) {
-        if (snake_head->x == tmp->x && snake_head->y == tmp->y && snake_head != tmp) {
-            free(snake);
-            snake = init_snake();
+
+    struct s_snake * temp = tmp;
+    while (temp != NULL) {
+        if (snake_head->x == temp->x && snake_head->y == temp->y && snake_head != temp) {
+            tmp = init_snake();
             *lives -= 1;
+            destroy(snake);
             break;
         }
-        tmp = tmp->next;
+        temp = temp->next;
     }
 
     printf("%s: %d\t%s: %d\n", SCORES, *scores, LIVES, *lives);
 
     for (int line = 0; line < HEIGHT; line++) {
         for (int column = 0; column < WIDTH; column++) {
-            tmp = snake;
-            while (tmp != NULL) {
-                if (line == tmp->y && column == tmp->x) {
+            temp = tmp;
+            while (temp != NULL) {
+                if (line == temp->y && column == temp->x) {
                     putchar(SNAKE);
                     break;
                 }
-                tmp = tmp->next;
+                temp = temp->next;
             }
-            if (tmp) {
+            if (temp) {
                 continue;
             }
 
@@ -238,5 +239,6 @@ struct s_snake *draw_garden(struct s_apple *apple, struct s_snake *snake, int *s
         }
         putchar(NEWLINE);
     }
-    return snake;
+
+    return tmp;
 }
