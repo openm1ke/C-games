@@ -52,6 +52,7 @@ struct s_snake *get_snake_head(struct s_snake *);
 struct s_snake *add_snake(struct s_snake *, int);
 void apple_destroy(struct s_apple *);
 void snake_destroy(struct s_snake *);
+int check_collision(struct s_game *game);
 
 int main() {
     char c = ' ';
@@ -102,13 +103,29 @@ void init_game(struct s_game *game) {
     game->snake_head = get_snake_head(game->snake);
 }
 
+int check_collision(struct s_game *game) {
+    int res = 1;
+    struct s_snake *temp = game->snake;
+    while (temp != NULL) {
+        if (game->apple->x == temp->x && game->apple->y == temp->y) {
+            res = 0;
+        }
+        temp = temp->next;
+    }
+    return res;
+}
+
 void play(struct s_game *game) {
     struct s_snake *temp;
     move_snake(game->snake);
 
     if (game->snake_head->x == game->apple->x && game->snake_head->y == game->apple->y) {
         apple_destroy(game->apple);
-        game->apple = init_apple();
+        while (1) {
+            game->apple = init_apple();
+            if (check_collision(game)) break;
+            apple_destroy(game->apple);
+        }
         game->scores += 10;
         //  game->speed -= SPEED_INC;
         game->snake = add_snake(game->snake, 1);
