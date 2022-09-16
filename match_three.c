@@ -6,11 +6,13 @@
 #include <unistd.h>
 
 #define WIDTH 20
-#define HEIGHT 15
+#define HEIGHT 23
 #define WALL1 '-'
 #define WALL2 '|'
 #define SPACE ' '
 #define NEWLINE '\n'
+#define SPEED_START 1000000
+#define SPEED_INC 5000
 
 struct brick {
     int x;
@@ -23,16 +25,23 @@ struct brick {
 
 struct s_game {
     int scores;
+    int speed;
     int ** board;
     struct brick * block;
 };
 
 void draw_board(struct s_game * game);
+void block_swap_values(struct s_game * game);
 
 int main() {
 
     struct s_game game;
+    char c = ' ';
+    int n = 0;
+    //int d;
+
     game.scores = 0;
+    game.speed = SPEED_START;
 
     //int static_array[WIDTH][HEIGHT] = {0};
     //static_array[WIDTH-2][HEIGHT-2] = 1;
@@ -50,8 +59,8 @@ int main() {
 
     struct brick * block;
     block = malloc(sizeof(struct brick));
-    block->x = 3;
-    block->y = 3;
+    block->x = 5;
+    block->y = 2;
     block->direction = 1;
     block->v1 = 1;
     block->v2 = 2;
@@ -60,25 +69,44 @@ int main() {
     game.block = block;
     //printf("%d", game.block->direction);
     //exit(0);
-    system("clear");
-    draw_board(&game);
-    sleep(1);
-    system("clear");
-    block->y = 4;
-    draw_board(&game);
-    sleep(1);
 
-
-    /*
-    for (int i = 0; i < WIDTH; i++) {
-        free(pointer_array[i]);
+    if (!isatty(STDIN_FILENO)) {
+        if (freopen("/dev/tty", "r", stdin) == NULL) {
+            printf("Cannot open the file");
+        }
     }
-    free(pointer_array);
-    */
-    //game.board = NULL;
+    system("stty -icanon");
+
+    while (c != 'q') {
+        if (ioctl(0, FIONREAD, &n) == 0 && n > 0) {
+            c = getchar();
+            //d = game.block->direction;
+            if (c == '=' || c == '+') game.speed -= SPEED_INC;
+            if (c == '-') game.speed += SPEED_INC;
+            if (c == 'd') game.block->x += 1;
+            if (c == 's') game.block->y += 1;
+            if (c == 'a') game.block->x -= 1;
+            if (c == ' ') game.block->direction = 1 - game.block->direction; //  flip between 0 and 1
+            if (c == 'w') block_swap_values(&game);
+            if (c == 'q') break;
+        }
+        system("clear");
+        game.block->y += 1;
+        draw_board(&game);
+
+        usleep(game.speed);
+    }
+
     return 0;
 }
 
+void block_swap_values(struct s_game * game) {
+    int temp;
+    temp = game->block->v1;
+    game->block->v1 = game->block->v2;
+    game->block->v2 = game->block->v3;
+    game->block->v3 = temp;
+}
 
 void draw_board(struct s_game * game) {
     //printf("DRAW\n %d", game->block->direction);
