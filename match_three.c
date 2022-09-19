@@ -48,7 +48,6 @@ void destroy_block(struct s_block *);
 void destroy_board(int **);
 
 int main() {
-
     struct s_game game;
     char c;
     int n = 0;
@@ -66,7 +65,6 @@ int main() {
         }
     }
     system("stty -icanon");
-
     while (c != 'q') {
         d = 2; //  drop down everytime
         if (ioctl(0, FIONREAD, &n) == 0 && n > 0) {
@@ -123,7 +121,6 @@ struct s_block * init_block() {
     return block;
 }
 
-
 void block_check_collision(struct s_game * game, int step) {
     int d;
     switch (step) {
@@ -138,7 +135,6 @@ void block_check_collision(struct s_game * game, int step) {
                 game->board[game->block->x][game->block->y - 1] == 0 &&
                 game->block->y + 1 != HEIGHT - 1)
                     game->block->direction = 1 - game->block->direction;
-            //printf("%d\n", d);
             break;
         case 1:
             if ((game->block->direction == 1 && game->block->x + 1 == WIDTH - 1) ||
@@ -160,8 +156,7 @@ void block_check_collision(struct s_game * game, int step) {
                 game->block->y + 1 != HEIGHT - 1)) {
                 game->block->y++;
             } else {
-                //printf("Stopped\n");
-                board_save_values(game); //  если нет возможности двигаться, то сохраняем значения и создаем новый блок
+                board_save_values(game);
                 game->speed = SPEED_START;
             }
             break;
@@ -190,23 +185,20 @@ void board_save_values(struct s_game * game) {
         game->board[game->block->x][game->block->y] = game->block->v2;
         game->board[game->block->x][game->block->y + 1] = game->block->v3;
     }
-
     int count_board;
     int count_temp;
     int **temp;
-
     do {
         count_board = count_board_values(game->board);
         temp = init_temp_board(game);
         count_temp = count_board_values(temp);
         temp_delete_zeros(temp);
+        game->scores += (count_board - count_temp) * 10;
         destroy_board(game->board);
         game->board = temp;
     } while (count_temp < count_board);
-
     destroy_block(game->block);
     game->block = init_block();
-
     if ((game->block->direction == 1 &&
         (game->board[game->block->x][game->block->y] > 0 ||
          game->board[game->block->x][game->block->y+1] > 0)) ||
@@ -227,7 +219,6 @@ void temp_delete_zeros(int ** temp) {
             }
         }
     }
-
     for (int i = WIDTH - 1; i > 0; i--) {
         for (int j = HEIGHT - 2; j > 0; j--) {
             if (temp[i][j] == 0 && temp[i][j - 1] != 0) {
@@ -269,7 +260,10 @@ int ** init_temp_board(struct s_game * game) {
                     temp[i][j + 3] = 0;
                     game->board[i][j + 3] = 0;
                 }
-                if (temp_value == game->board[i][j - 2]) { temp[i][j-2] = 0; game->board[i][j-2] = 0; }
+                if (temp_value == game->board[i][j - 2]) {
+                    temp[i][j-2] = 0;
+                    game->board[i][j-2] = 0;
+                }
             } else if (temp_value == game->board[i - 1][j] && temp_value == game->board[i + 1][j]) {
                 temp[i][j] = 0;
                 temp[i - 1][j] = 0;
@@ -345,4 +339,5 @@ void draw_board(struct s_game * game) {
         }
         putchar(NEWLINE);
     }
+    printf("Scores: %d\n", game->scores);
 }
