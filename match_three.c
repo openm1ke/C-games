@@ -199,7 +199,9 @@ void board_save_values(struct s_game * game) {
 
     int ** temp = init_board();
     int temp_value;
-
+    // цикл проверки количества чисел в массиве игрового поля
+    // если количество не изменилось то выйти из цикла
+    //
     for (int i = 0; i < WIDTH; i++) {
         for (int j = 0; j < HEIGHT; j++) {
             temp_value = game->board[i][j];
@@ -209,11 +211,9 @@ void board_save_values(struct s_game * game) {
                 temp[i][j - 1] = 0;
                 temp[i][j + 1] = 0;
                 game->board[i][j+1] = 0;
-                if (j + 2 != HEIGHT) {
-                    if (temp_value == game->board[i][j + 2]) {
-                        temp[i][j + 2] = 0;
-                        game->board[i][j + 2] = 0;
-                    }
+                if (j + 2 != HEIGHT && temp_value == game->board[i][j + 2]) {
+                    temp[i][j + 2] = 0;
+                    game->board[i][j + 2] = 0;
                 }
                 if (temp_value == game->board[i][j - 2]) { temp[i][j-2] = 0; game->board[i][j-2] = 0; }
             } else if (temp_value == game->board[i - 1][j] && temp_value == game->board[i + 1][j]) {
@@ -221,11 +221,9 @@ void board_save_values(struct s_game * game) {
                 temp[i - 1][j] = 0;
                 temp[i + 1][j] = 0;
                 game->board[i+1][j] = 0;
-                if (i + 2 < WIDTH) {
-                    if (temp_value == game->board[i + 2][j]) {
-                        temp[i + 2][j] = 0;
-                        game->board[i + 2][j] = 0;
-                    }
+                if (i + 2 < WIDTH && temp_value == game->board[i + 2][j]) {
+                    temp[i + 2][j] = 0;
+                    game->board[i + 2][j] = 0;
                 }
                 if (i - 2 > 0) {
                     if (temp_value == game->board[i - 2][j]) {
@@ -236,20 +234,35 @@ void board_save_values(struct s_game * game) {
             }
         }
     }
-    /*
-    for (int i = WIDTH - 1; i > 0; i--) {
-        for (int j = HEIGHT; j > 0; j--) {
-            int temp_value = temp[i][j];
-            if (temp_value == -1)
-                while(temp_value != 0) {
 
-                }
-            if (temp[i][j] != 0 && temp[i][j + 1] == 0 && j + 1 != HEIGHT - 1) {
-                temp[i][j + 1] = temp[i][j];
+    for (int i = 0; i < WIDTH; i++) {
+        for (int j = 0; j < HEIGHT; j++) {
+            if (temp[i][j] != 0 && temp[i][j+1] == 0 && j + 1 != HEIGHT - 1) {
+                temp[i][j+1] = temp[i][j];
                 temp[i][j] = 0;
             }
         }
-    }*/
+    }
+
+    for (int i = WIDTH - 1; i > 0; i--) {
+        for (int j = HEIGHT - 2; j > 0; j--) {
+            //printf("i = %d, j = %d\n", i, j);
+            //exit(0);
+            if (temp[i][j] == 0 && temp[i][j - 1] != 0) {
+                temp[i][j] = temp[i][j - 1];
+                temp[i][j - 1] = 0;
+            }
+        }
+    }
+
+    for (int i = 0; i < WIDTH; i++) {
+        for (int j = 0; j < HEIGHT; j++) {
+            if (temp[i][j] != 0 && temp[i][j+1] == 0 && j + 1 != HEIGHT - 1) {
+                temp[i][j+1] = temp[i][j];
+                temp[i][j] = 0;
+            }
+        }
+    }
 
 
     destroy_board(game->board);
@@ -303,7 +316,7 @@ void draw_board(struct s_game * game) {
                 printf("%d", game->block->v2);
             } else if (line == block3y && column == block3x) {
                 printf("%d", game->block->v3);
-            } else if (line > 0 && column > 0 && game->board[column][line] != 0) {
+            } else if (line > 0 && column > 0 && game->board[column][line] > 0) {
                 printf("%d", game->board[column][line]);
             } else {
                 putchar(SPACE);
