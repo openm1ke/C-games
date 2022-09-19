@@ -119,8 +119,8 @@ struct s_block * init_block() {
     struct s_block * block;
     srand(time(0));
     block = malloc(sizeof(struct s_block));
-    block->x = 5;
-    block->y = 2;
+    block->x = WIDTH / 2;
+    block->y = -1;
     block->direction = rand() % 2;
     block->v1 = rand() % 4 + 1;
     block->v2 = rand() % 4 + 1;
@@ -196,6 +196,64 @@ void board_save_values(struct s_game * game) {
         game->board[game->block->x][game->block->y + 1] = game->block->v3;
     }
     destroy_block(game->block);
+
+    int ** temp = init_board();
+    int temp_value;
+
+    for (int i = 0; i < WIDTH; i++) {
+        for (int j = 0; j < HEIGHT; j++) {
+            temp_value = game->board[i][j];
+            temp[i][j] = temp_value;
+            if (temp_value == game->board[i][j - 1] && temp_value == game->board[i][j + 1]) {
+                temp[i][j] = 0;
+                temp[i][j - 1] = 0;
+                temp[i][j + 1] = 0;
+                game->board[i][j+1] = 0;
+                if (j + 2 != HEIGHT) {
+                    if (temp_value == game->board[i][j + 2]) {
+                        temp[i][j + 2] = 0;
+                        game->board[i][j + 2] = 0;
+                    }
+                }
+                if (temp_value == game->board[i][j - 2]) { temp[i][j-2] = 0; game->board[i][j-2] = 0; }
+            } else if (temp_value == game->board[i - 1][j] && temp_value == game->board[i + 1][j]) {
+                temp[i][j] = 0;
+                temp[i - 1][j] = 0;
+                temp[i + 1][j] = 0;
+                game->board[i+1][j] = 0;
+                if (i + 2 < WIDTH) {
+                    if (temp_value == game->board[i + 2][j]) {
+                        temp[i + 2][j] = 0;
+                        game->board[i + 2][j] = 0;
+                    }
+                }
+                if (i - 2 > 0) {
+                    if (temp_value == game->board[i - 2][j]) {
+                        temp[i - 2][j] = 0;
+                        game->board[i - 2][j] = 0;
+                    }
+                }
+            }
+        }
+    }
+    /*
+    for (int i = WIDTH - 1; i > 0; i--) {
+        for (int j = HEIGHT; j > 0; j--) {
+            int temp_value = temp[i][j];
+            if (temp_value == -1)
+                while(temp_value != 0) {
+
+                }
+            if (temp[i][j] != 0 && temp[i][j + 1] == 0 && j + 1 != HEIGHT - 1) {
+                temp[i][j + 1] = temp[i][j];
+                temp[i][j] = 0;
+            }
+        }
+    }*/
+
+
+    destroy_board(game->board);
+    game->board = temp;
     game->block = init_block();
 }
 
