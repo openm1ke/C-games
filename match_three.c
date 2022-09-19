@@ -32,6 +32,7 @@ struct s_game {
 
 void draw_board(struct s_game * game);
 void block_swap_values(struct s_game * game);
+void block_check_collision(struct s_game * game, int step);
 
 int main() {
 
@@ -54,6 +55,7 @@ int main() {
 
     //printf("%d", pointer_array[1][1]);
     pointer_array[1][HEIGHT-2] = 2;
+    pointer_array[5][7] = 2;
     //exit(0);
     game.board = pointer_array;
 
@@ -83,21 +85,59 @@ int main() {
             //d = game.block->direction;
             if (c == '=' || c == '+') game.speed -= SPEED_INC;
             if (c == '-') game.speed += SPEED_INC;
-            if (c == 'd') game.block->x += 1;
-            if (c == 's') game.block->y += 1;
-            if (c == 'a') game.block->x -= 1;
+            if (c == 'd') block_check_collision(&game, 1); //  game.block->x += 1;
+            if (c == 's') block_check_collision(&game, 2); //  game.block->y += 1;
+            if (c == 'a') block_check_collision(&game, 3); //  game.block->x -= 1;
             if (c == ' ') game.block->direction = 1 - game.block->direction; //  flip between 0 and 1
             if (c == 'w') block_swap_values(&game);
             if (c == 'q') break;
+            block_check_collision(&game, 2);
         }
         system("clear");
-        game.block->y += 1;
+
         draw_board(&game);
 
-        usleep(game.speed);
+        sleep(1);
     }
 
     return 0;
+}
+
+void block_check_collision(struct s_game * game, int step) {
+    switch (step) {
+        case 1:
+            if ((game->block->direction == 1 && game->block->x + 1 == WIDTH - 1) ||
+                (game->block->direction == 0 && game->block->x + 2 == WIDTH - 1))
+                    break;
+            if (game->board[game->block->x + 1][game->block->y] == 0 &&
+                game->board[game->block->x + 1][game->block->y - 1] == 0 &&
+                game->board[game->block->x + 1][game->block->y + 1] == 0)
+                    game->block->x++;
+            break;
+        case 2:
+            if (game->block->direction == 1 &&
+                game->board[game->block->x][game->block->y + 2] == 0 &&
+                game->block->y + 2 != HEIGHT - 1)
+                    game->block->y++;
+            if (game->block->direction == 0 &&
+                game->board[game->block->x][game->block->y + 1] == 0 &&
+                game->board[game->block->x - 1][game->block->y + 1] == 0 &&
+                game->board[game->block->x + 1][game->block->y + 1] == 0 &&
+                game->block->y + 1 != HEIGHT - 1)
+                    game->block->y++;
+            break;
+        case 3:
+            if ((game->block->direction == 1 && game->block->x - 1 == 0) ||
+                (game->block->direction == 0 && game->block->x - 2 == 0))
+                break;
+            if (game->board[game->block->x - 1][game->block->y] == 0 &&
+                game->board[game->block->x - 1][game->block->y - 1] == 0 &&
+                game->board[game->block->x - 1][game->block->y + 1] == 0)
+                    game->block->x--;
+            break;
+        default:
+            break;
+    }
 }
 
 void block_swap_values(struct s_game * game) {
