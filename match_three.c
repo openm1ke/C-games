@@ -5,10 +5,10 @@
 #include <time.h>
 #include <unistd.h>
 
-#define WIDTH 6
-#define HEIGHT 8
-#define WALL1 '-'
-#define WALL2 '|'
+#define WIDTH 8
+#define HEIGHT 12
+#define WALL1 '0' // -
+#define WALL2 '0' // |
 #define SPACE ' '
 #define NEWLINE '\n'
 #define GAMEOVER "Game over!"
@@ -60,6 +60,7 @@ int main() {
     game.board = init_board();
     game.block = init_block();
     game.board[5][5] = 2;
+
     /*
     for(int i = 0; i < HEIGHT + 1; i++) {
         for(int j = 0; j < WIDTH + 2; j++) {
@@ -125,7 +126,7 @@ struct s_block *init_block() {
     srand(time(0));
     block = malloc(sizeof(struct s_block));
     block->y = WIDTH / 2;
-    block->direction = rand() % 2;
+    block->direction = 0; // rand() % 2;
     if (block->direction == 1)
         block->x = -1;
     else
@@ -137,6 +138,9 @@ struct s_block *init_block() {
 }
 
 void block_check_collision(struct s_game *game, int step) {
+
+    if(game->is_over == 1 && game->block == NULL) return;
+
     int d = game->block->direction;
     switch (step) {
         case 0:
@@ -221,15 +225,16 @@ void block_check_collision(struct s_game *game, int step) {
 }
 
 void board_save_values(struct s_game *game) {
+    /*
     if (game->block->direction == 1 && game->block->x - 1 < 0) {
         game->is_over = 1;
         return;
-    }
+    }*/
 
     if (game->block->direction == 1) {
-        if (game->block->x - 1 >= 0) game->board[game->block->x - 1][game->block->y] = game->block->v1;
-        if (game->block->x >= 0) game->board[game->block->x][game->block->y] = game->block->v2;
-        if (game->block->x + 1 >= 0) game->board[game->block->x + 1][game->block->y] = game->block->v3;
+        game->board[game->block->x - 1][game->block->y] = game->block->v1;
+        game->board[game->block->x][game->block->y] = game->block->v2;
+        game->board[game->block->x + 1][game->block->y] = game->block->v3;
     } else if (game->block->direction == 0) {
         game->board[game->block->x][game->block->y - 1] = game->block->v1;
         game->board[game->block->x][game->block->y] = game->block->v2;
@@ -268,6 +273,8 @@ void board_save_values(struct s_game *game) {
                                          game->board[game->block->x][game->block->y - 1] > 0 ||
                                          game->board[game->block->x][game->block->y] > 0))) {
         game->is_over = 1;
+        destroy_block(game->block);
+        game->block = NULL;
     }
 }
 int check_board_diff(int ** board1, int ** board2) {
@@ -295,7 +302,7 @@ void temp_delete_zeros(int **temp) {
 int count_board_values(int **board) {
     int count = 0;
     for (int i = 0; i < HEIGHT; i++) {
-        for (int j = 0; j < WIDTH; j++) {
+        for (int j = 0; j < WIDTH + 1; j++) {
             if (board[i][j] > 0) count++;
         }
     }
@@ -306,8 +313,8 @@ int **init_temp_board(struct s_game *game) {
     int **temp = init_board();
     int temp_value;
 
-    for (int i = 0; i < HEIGHT + 1; i++) {
-        for (int j = 0; j < WIDTH; j++) {
+    for (int i = 0; i < HEIGHT; i++) {
+        for (int j = 0; j < WIDTH + 1; j++) {
             temp_value = game->board[i][j];
             temp[i][j] = temp_value;
             if (temp_value == game->board[i][j - 1] && temp_value == game->board[i][j + 1]) {
@@ -357,8 +364,12 @@ void block_swap_values(struct s_game *game) {
 }
 
 void draw_board(struct s_game *game) {
-    int block1x, block1y, block2x, block2y, block3x, block3y;
-    if (game->is_over != 1) {
+    /*if(game->block == NULL) {
+        printf("Game over");
+        return;
+    }*/
+    int block1x = -1, block1y = -1, block2x = -1, block2y = -1, block3x = -1, block3y= -1;
+    if (game->is_over != 1 && game->block != NULL) {
         switch (game->block->direction) {
             case 1:
                 block1x = game->block->x - 1;
@@ -381,6 +392,7 @@ void draw_board(struct s_game *game) {
 
     for (int i = 0; i < HEIGHT + 1; i++) {
         for (int j = 0; j < WIDTH + 1; j++) {
+
             if (i + 1== HEIGHT + 1) {
                 putchar(WALL1);
             } else if (j == 0 || j + 2 == WIDTH + 2) {
@@ -389,11 +401,11 @@ void draw_board(struct s_game *game) {
                 printf(GAMEOVER);
                 j += strlen(GAMEOVER) - 1;
             } else if (i == block1x && j == block1y) {
-                printf("%d", game->block->v1);
+                    printf("%d", game->block->v1);
             } else if (i == block2x && j == block2y) {
-                printf("%d", game->block->v2);
+                    printf("%d", game->block->v2);
             } else if (i == block3x && j == block3y) {
-                printf("%d", game->block->v3);
+                    printf("%d", game->block->v3);
             } else if (game->board[i][j] > 0) {
                 printf("%d", game->board[i][j]);
             } else {
