@@ -6,14 +6,14 @@
 #include <unistd.h>
 
 #define WIDTH 6
-#define HEIGHT 9
+#define HEIGHT 8
 #define WALL1 '-'
 #define WALL2 '|'
 #define SPACE ' '
 #define NEWLINE '\n'
 #define GAMEOVER "Game over!"
-#define MIDSCREENX (WIDTH / 2) - strlen(GAMEOVER) / 2
-#define MIDSCREENY HEIGHT / 2
+#define MIDSCREENY 2
+#define MIDSCREENX HEIGHT / 2
 #define SPEED_START 500000
 #define SPEED_INC 5000
 
@@ -59,7 +59,7 @@ int main() {
     game.speed = SPEED_START;
     game.board = init_board();
     game.block = init_block();
-
+    game.board[5][5] = 2;
     /*
     for(int i = 0; i < HEIGHT + 1; i++) {
         for(int j = 0; j < WIDTH + 2; j++) {
@@ -124,9 +124,12 @@ struct s_block *init_block() {
     struct s_block *block;
     srand(time(0));
     block = malloc(sizeof(struct s_block));
-    block->x = WIDTH / 2;
-    block->y = 1;
+    block->y = WIDTH / 2;
     block->direction = rand() % 2;
+    if (block->direction == 1)
+        block->x = -1;
+    else
+        block->x = 0;
     block->v1 = rand() % 4 + 1;
     block->v2 = rand() % 4 + 1;
     block->v3 = rand() % 4 + 1;
@@ -134,49 +137,82 @@ struct s_block *init_block() {
 }
 
 void block_check_collision(struct s_game *game, int step) {
-    int d;
+    int d = game->block->direction;
     switch (step) {
         case 0:
-            d = 1 - game->block->direction;
-            if (d == 0 && game->board[game->block->y + 1][game->block->x] == 0 &&
-                game->block->x + 1 != WIDTH - 1 && game->board[game->block->y - 1][game->block->x] == 0 &&
-                game->block->x - 1 != 0)
-                game->block->direction = 1 - game->block->direction;
-            if (d == 1 && game->board[game->block->y][game->block->x + 1] == 0 &&
-                game->board[game->block->y][game->block->x - 1] == 0 && game->block->y + 1 != HEIGHT)
-                game->block->direction = 1 - game->block->direction;
+            if (d == 0 &&
+                game->block->x - 1 >= 0 &&
+                game->block->x + 1 != HEIGHT &&
+                game->board[game->block->x + 1][game->block->y] == 0 &&
+                game->board[game->block->x - 1][game->block->y] == 0)
+                    game->block->direction = 1 - game->block->direction;
+            if (d == 1 && game->block->x >= 0 &&
+                game->block->y - 1 != 0 &&
+                game->block->y + 1 != WIDTH &&
+                game->board[game->block->x][game->block->y + 1] == 0 &&
+                game->board[game->block->x][game->block->y - 1] == 0)
+                    game->block->direction = 1 - game->block->direction;
             break;
         case 1:
-            if ((game->block->direction == 1 && game->block->x + 1 == WIDTH) ||
-                (game->block->direction == 0 &&
-                 (game->block->x + 2 == WIDTH || game->board[game->block->y + 2][game->block->x] != 0)))
-                break;
-            if (game->board[game->block->y + 1][game->block->x] == 0 &&
-                game->board[game->block->y + 1][game->block->x - 1] == 0 &&
-                game->board[game->block->y + 1][game->block->x + 1] == 0)
-                game->block->y++;
+            if (game->block->x - 1 < 0) break;
+            if (d == 0 &&
+               (game->block->y + 2 >= WIDTH ||
+                game->board[game->block->x][game->block->y + 2 ] != 0))
+                    break;
+            if (d == 1 &&
+                    (game->block->y + 1 == WIDTH ||
+                game->board[game->block->x][game->block->y + 1] != 0 ||
+                game->board[game->block->x - 1][game->block->y + 1] != 0 ||
+                game->board[game->block->x + 1][game->block->y + 1] != 0))
+                    break;
+            if ((d == 0 && game->board[game->block->x][game->block->y + 2] == 0) ||
+                (d == 1 &&
+                game->board[game->block->x][game->block->y + 1] == 0 &&
+                game->board[game->block->x + 1][game->block->y + 1] == 0 &&
+                game->board[game->block->x - 1][game->block->y + 1] == 0))
+                    game->block->y++;
             break;
         case 2:
-            if ((game->block->direction == 1 && game->board[game->block->y][game->block->x + 2] == 0 &&
-                 game->block->y + 2 != HEIGHT) ||
-                (game->block->direction == 0 && game->board[game->block->y][game->block->x + 1] == 0 &&
-                 game->board[game->block->y - 1][game->block->x + 1] == 0 &&
-                 game->board[game->block->y + 1][game->block->x + 1] == 0 &&
-                 game->block->y + 1 != HEIGHT)) {
-                game->block->x++;
+            if ((d == 1 &&
+                 game->board[game->block->x + 2][game->block->y] == 0 &&
+                 game->block->x + 2 != HEIGHT) ||
+                (d == 0 && game->board[game->block->x + 1][game->block->y] == 0 &&
+                 game->board[game->block->x + 1][game->block->y + 1] == 0 &&
+                 game->board[game->block->x + 1][game->block->y - 1] == 0 &&
+                 game->block->x + 1 != HEIGHT)) {
+                    game->block->x++;
             } else {
+                /*if (d == 1 && game->block->x <= 0) {
+                    game->is_over = 1;
+                    return;
+                }
+                if (d == 0 && game->block->x == 0 && (game->board[game->block->x + 1][game->block->y + 1] > 0 ||
+                                      game->board[game->block->x + 1][game->block->y - 1] > 0 ||
+                                      game->board[game->block->x + 1][game->block->y] > 0)) {
+                    game->is_over = 1;
+                    return;
+                }*/
                 board_save_values(game);
                 game->speed = SPEED_START;
             }
             break;
         case 3:
-            if ((game->block->direction == 1 && game->block->x - 1 == 0) ||
-                (game->block->direction == 0 &&
-                 (game->block->x - 2 == 0 || game->board[game->block->y - 2][game->block->x] != 0)))
+            if (game->block->x - 1 < 0) break;
+            if (d == 0 &&
+                (game->block->y - 2 <= 0 ||
+                 game->board[game->block->x][game->block->y - 2 ] != 0))
                 break;
-            if (game->board[game->block->y - 1][game->block->x] == 0 &&
-                game->board[game->block->y - 1][game->block->x - 1] == 0 &&
-                game->board[game->block->y - 1][game->block->x + 1] == 0)
+            if (d == 1 &&
+                (game->block->y - 1 == 0 ||
+                 game->board[game->block->x][game->block->y - 1] != 0 ||
+                 game->board[game->block->x - 1][game->block->y - 1] != 0 ||
+                 game->board[game->block->x + 1][game->block->y - 1] != 0))
+                break;
+            if ((d == 0 && game->board[game->block->x][game->block->y - 2] == 0) ||
+                (d == 1 &&
+                 game->board[game->block->x][game->block->y - 1] == 0 &&
+                 game->board[game->block->x + 1][game->block->y - 1] == 0 &&
+                 game->board[game->block->x - 1][game->block->y - 1] == 0))
                 game->block->y--;
             break;
         default:
@@ -185,15 +221,19 @@ void block_check_collision(struct s_game *game, int step) {
 }
 
 void board_save_values(struct s_game *game) {
+    if (game->block->direction == 1 && game->block->x - 1 < 0) {
+        game->is_over = 1;
+        return;
+    }
 
     if (game->block->direction == 1) {
-        game->board[game->block->y - 1][game->block->x] = game->block->v1;
-        game->board[game->block->y][game->block->x] = game->block->v2;
-        game->board[game->block->y + 1][game->block->x] = game->block->v3;
-    } else {
-        game->board[game->block->y][game->block->x - 1] = game->block->v1;
-        game->board[game->block->y][game->block->x] = game->block->v2;
-        game->board[game->block->y][game->block->x + 1] = game->block->v3;
+        if (game->block->x - 1 >= 0) game->board[game->block->x - 1][game->block->y] = game->block->v1;
+        if (game->block->x >= 0) game->board[game->block->x][game->block->y] = game->block->v2;
+        if (game->block->x + 1 >= 0) game->board[game->block->x + 1][game->block->y] = game->block->v3;
+    } else if (game->block->direction == 0) {
+        game->board[game->block->x][game->block->y - 1] = game->block->v1;
+        game->board[game->block->x][game->block->y] = game->block->v2;
+        game->board[game->block->x][game->block->y + 1] = game->block->v3;
     }
 
     /*printf("x(%d), y(%d)\n", game->block->x, game->block->y);
@@ -214,7 +254,7 @@ void board_save_values(struct s_game *game) {
         count_board = count_board_values(game->board);
         temp = init_temp_board(game);
         count_temp = count_board_values(temp);
-        //temp_delete_zeros(temp);
+        temp_delete_zeros(temp);
         game->scores += (count_board - count_temp) * 10;
         diff = check_board_diff(game->board, temp);
         destroy_board(game->board);
@@ -222,48 +262,40 @@ void board_save_values(struct s_game *game) {
     } while (count_temp < count_board || diff == 1);
     destroy_block(game->block);
     game->block = init_block();
-    if ((game->block->direction == 1 && (game->board[game->block->y][game->block->x] > 0 ||
-                                         game->board[game->block->y][game->block->x + 1] > 0)) ||
-        (game->block->direction == 0 && (game->board[game->block->y][game->block->x] > 0 ||
-                                         game->board[game->block->y + 1][game->block->x] > 0 ||
-                                         game->board[game->block->y - 1][game->block->x] > 0)))
+    if ((game->block->direction == 1 && (game->board[game->block->x + 1][game->block->y] > 0 ||
+                                         game->board[game->block->x + 2][game->block->y] > 0)) ||
+        (game->block->direction == 0 && (game->board[game->block->x][game->block->y + 1] > 0 ||
+                                         game->board[game->block->x][game->block->y - 1] > 0 ||
+                                         game->board[game->block->x][game->block->y] > 0))) {
         game->is_over = 1;
-    if (game->is_over == 1) return;
+    }
 }
 int check_board_diff(int ** board1, int ** board2) {
     int diff = 0;
-    for (int i = 0; i < HEIGHT + 1; i++) {
-        for (int j = 0; j < WIDTH + 2; j++) {
+    for (int i = 0; i < HEIGHT; i++) {
+        for (int j = 0; j < WIDTH + 1; j++) {
             if (board1[i][j] != board2[i][j]) diff = 1;
         }
     }
     return diff;
 }
 void temp_delete_zeros(int **temp) {
-    for (int i = 0; i < HEIGHT + 1; i++) {
-        for (int j = 0; j < WIDTH + 2; j++) {
-            if (j + 1 != WIDTH - 1) {
-                if (temp[i][j] != 0 && temp[i][j + 1] == 0) {
-                    temp[i][j + 1] = temp[i][j];
+    for (int i = 0; i < HEIGHT; i++) {
+        for (int j = 0; j < WIDTH + 1; j++) {
+            if (i + 1 != HEIGHT) {
+                if (temp[i][j] != 0 && temp[i + 1][j] == 0) {
+                    temp[i + 1][j] = temp[i][j];
                     temp[i][j] = 0;
                 }
             }
         }
-    }/*
-    for (int i = HEIGHT - 1; i > 0; i--) {
-        for (int j = WIDTH - 2; j > 0; j--) {
-            if (temp[i][j] == 0 && temp[i][j - 1] != 0) {
-                temp[i][j] = temp[i][j - 1];
-                temp[i][j - 1] = 0;
-            }
-        }
-    }*/
+    }
 }
 
 int count_board_values(int **board) {
     int count = 0;
-    for (int i = 0; i < HEIGHT + 1; i++) {
-        for (int j = 0; j < WIDTH + 2; j++) {
+    for (int i = 0; i < HEIGHT; i++) {
+        for (int j = 0; j < WIDTH; j++) {
             if (board[i][j] > 0) count++;
         }
     }
@@ -275,7 +307,7 @@ int **init_temp_board(struct s_game *game) {
     int temp_value;
 
     for (int i = 0; i < HEIGHT + 1; i++) {
-        for (int j = 0; j < WIDTH + 2; j++) {
+        for (int j = 0; j < WIDTH; j++) {
             temp_value = game->board[i][j];
             temp[i][j] = temp_value;
             if (temp_value == game->board[i][j - 1] && temp_value == game->board[i][j + 1]) {
@@ -353,10 +385,10 @@ void draw_board(struct s_game *game) {
                 putchar(WALL1);
             } else if (j == 0 || j + 2 == WIDTH + 2) {
                 putchar(WALL2);
-            /*} else if (column == MIDSCREENY && line == MIDSCREENX && game->is_over == 1) {
+            } else if (j == MIDSCREENY && i == MIDSCREENX && game->is_over == 1) {
                 printf(GAMEOVER);
-                line += strlen(GAMEOVER) - 1;
-            */} else if (i == block1x && j == block1y) {
+                j += strlen(GAMEOVER) - 1;
+            } else if (i == block1x && j == block1y) {
                 printf("%d", game->block->v1);
             } else if (i == block2x && j == block2y) {
                 printf("%d", game->block->v2);
