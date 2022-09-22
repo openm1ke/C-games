@@ -5,10 +5,10 @@
 #include <time.h>
 #include <unistd.h>
 
-#define WIDTH 8
-#define HEIGHT 12
-#define WALL1 '0' // -
-#define WALL2 '0' // |
+#define WIDTH 9
+#define HEIGHT 11
+#define WALL1 '-' // -
+#define WALL2 '|' // |
 #define SPACE ' '
 #define NEWLINE '\n'
 #define GAMEOVER "Game over!"
@@ -59,7 +59,7 @@ int main() {
     game.speed = SPEED_START;
     game.board = init_board();
     game.block = init_block();
-    game.board[5][5] = 2;
+    //game.board[5][5] = 2;
 
     /*
     for(int i = 0; i < HEIGHT + 1; i++) {
@@ -126,7 +126,7 @@ struct s_block *init_block() {
     srand(time(0));
     block = malloc(sizeof(struct s_block));
     block->y = WIDTH / 2;
-    block->direction = 0; // rand() % 2;
+    block->direction = rand() % 2;
     if (block->direction == 1)
         block->x = -1;
     else
@@ -139,7 +139,7 @@ struct s_block *init_block() {
 
 void block_check_collision(struct s_game *game, int step) {
 
-    if(game->is_over == 1 && game->block == NULL) return;
+    if(game->is_over == 1 || game->block == NULL) return;
 
     int d = game->block->direction;
     switch (step) {
@@ -256,6 +256,7 @@ void board_save_values(struct s_game *game) {
     int **temp;
     int diff;
     do {
+        //temp_delete_zeros(game->board);
         count_board = count_board_values(game->board);
         temp = init_temp_board(game);
         count_temp = count_board_values(temp);
@@ -334,7 +335,7 @@ int **init_temp_board(struct s_game *game) {
                     temp[i][j - 2] = 0;
                     game->board[i][j - 2] = 0;
                 }
-            } else if (temp_value == game->board[i - 1][j] && temp_value == game->board[i + 1][j]) {
+            } else if (i - 1 >= 0 && temp_value == game->board[i - 1][j] && temp_value == game->board[i + 1][j]) {
                 temp[i][j] = 0;
                 temp[i - 1][j] = 0;
                 temp[i + 1][j] = 0;
