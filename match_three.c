@@ -304,20 +304,18 @@ int **init_temp_board(struct s_game *game) {
                 temp[i][j - 1] = 0;
                 temp[i][j + 1] = 0;
                 game->board[i][j + 1] = 0;
-                flag = 1;
-                if (j + 2 != HEIGHT && temp_value == game->board[i][j + 2]) {
+
+                if (j + 2 <= WIDTH + 1 && temp_value == game->board[i][j + 2]) {
                     temp[i][j + 2] = 0;
                     game->board[i][j + 2] = 0;
-                } else {
-                    flag = 0;
+                    flag = 1;
                 }
-                if (j + 3 != HEIGHT && temp_value == game->board[i][j + 3] && flag == 1) {
+                if (j + 3 <= WIDTH + 1 && temp_value == game->board[i][j + 3] && flag == 1) {
                     temp[i][j + 3] = 0;
                     game->board[i][j + 3] = 0;
-                } else {
-                    flag = 0;
+                    flag = 1;
                 }
-                if (j + 4 != HEIGHT && temp_value == game->board[i][j + 4] && flag == 1) {
+                if (j + 4 <= WIDTH + 1 && temp_value == game->board[i][j + 4] && flag == 1) {
                     temp[i][j + 4] = 0;
                     game->board[i][j + 4] = 0;
                 }
@@ -326,19 +324,19 @@ int **init_temp_board(struct s_game *game) {
                     game->board[i][j - 2] = 0;
                 }
             }
-            if (i - 1 >= 0 && temp_value == game->board[i - 1][j] && temp_value == game->board[i + 1][j]) {
+            flag = 0;
+            if ((i - 1 >= 0 && i + 1 < HEIGHT) && temp_value == game->board[i - 1][j] && temp_value == game->board[i + 1][j] && temp_value != 0) {
                 temp[i][j] = 0;
                 temp[i - 1][j] = 0;
                 temp[i + 1][j] = 0;
                 game->board[i + 1][j] = 0;
-                flag = 1;
-                if (i + 2 < WIDTH && temp_value == game->board[i + 2][j]) {
+
+                if (i + 2 <= HEIGHT && temp_value == game->board[i + 2][j]) {
                     temp[i + 2][j] = 0;
                     game->board[i + 2][j] = 0;
-                } else {
-                    flag = 0;
+                    flag = 1;
                 }
-                if (i + 3 < WIDTH && temp_value == game->board[i + 3][j] && flag == 1) {
+                if (i + 3 <= HEIGHT && temp_value == game->board[i + 3][j] && flag == 1) {
                     temp[i + 3][j] = 0;
                     game->board[i + 3][j] = 0;
                 }
