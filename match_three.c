@@ -5,10 +5,10 @@
 #include <time.h>
 #include <unistd.h>
 
-#define WIDTH 9
-#define HEIGHT 11
-#define WALL1 '-' // -
-#define WALL2 '|' // |
+#define WIDTH 13
+#define HEIGHT 12
+#define WALL1 '-'
+#define WALL2 '|'
 #define SPACE ' '
 #define NEWLINE '\n'
 #define GAMEOVER "Game over!"
@@ -59,17 +59,7 @@ int main() {
     game.speed = SPEED_START;
     game.board = init_board();
     game.block = init_block();
-    //game.board[5][5] = 2;
 
-    /*
-    for(int i = 0; i < HEIGHT + 1; i++) {
-        for(int j = 0; j < WIDTH + 2; j++) {
-            printf("(%d)(%d) %d", i, j, game.board[i][j]);
-        }
-        printf("\n");
-    }
-    exit(0);
-    //*/
     if (!isatty(STDIN_FILENO)) {
         if (freopen("/dev/tty", "r", stdin) == NULL) {
             printf("Cannot open the file");
@@ -83,7 +73,7 @@ int main() {
             if (c == '=' || c == '+') game.speed -= SPEED_INC;
             if (c == '-') game.speed += SPEED_INC;
             if (c == ' ')
-                d = 0;  //  game.block->direction = 1 - game.block->direction; //  flip between 0 and 1
+                d = 0;
             if (c == 'd') d = 1;
             if (c == 's') {
                 d = 2;
@@ -186,7 +176,7 @@ void block_check_collision(struct s_game *game, int step) {
                  game->block->x + 1 != HEIGHT)) {
                     game->block->x++;
             } else {
-                /*if (d == 1 && game->block->x <= 0) {
+                if (d == 1 && game->block->x <= 0) {
                     game->is_over = 1;
                     return;
                 }
@@ -195,7 +185,7 @@ void block_check_collision(struct s_game *game, int step) {
                                       game->board[game->block->x + 1][game->block->y] > 0)) {
                     game->is_over = 1;
                     return;
-                }*/
+                }
                 board_save_values(game);
                 game->speed = SPEED_START;
             }
@@ -225,11 +215,11 @@ void block_check_collision(struct s_game *game, int step) {
 }
 
 void board_save_values(struct s_game *game) {
-    /*
+
     if (game->block->direction == 1 && game->block->x - 1 < 0) {
         game->is_over = 1;
         return;
-    }*/
+    }
 
     if (game->block->direction == 1) {
         game->board[game->block->x - 1][game->block->y] = game->block->v1;
@@ -241,22 +231,12 @@ void board_save_values(struct s_game *game) {
         game->board[game->block->x][game->block->y + 1] = game->block->v3;
     }
 
-    /*printf("x(%d), y(%d)\n", game->block->x, game->block->y);
-
-    for(int i = 0; i < HEIGHT + 1; i++) {
-        for(int j = 0; j < WIDTH + 2; j++) {
-            printf("%d ", game->board[i][j]);
-        }
-        printf("\n");
-    }
-    exit(0); // */
-
     int count_board;
     int count_temp;
     int **temp;
     int diff;
     do {
-        //temp_delete_zeros(game->board);
+        temp_delete_zeros(game->board);
         count_board = count_board_values(game->board);
         temp = init_temp_board(game);
         count_temp = count_board_values(temp);
@@ -313,42 +293,54 @@ int count_board_values(int **board) {
 int **init_temp_board(struct s_game *game) {
     int **temp = init_board();
     int temp_value;
-
+    int flag;
     for (int i = 0; i < HEIGHT; i++) {
         for (int j = 0; j < WIDTH + 1; j++) {
             temp_value = game->board[i][j];
             temp[i][j] = temp_value;
+            flag = 0;
             if (temp_value == game->board[i][j - 1] && temp_value == game->board[i][j + 1]) {
                 temp[i][j] = 0;
                 temp[i][j - 1] = 0;
                 temp[i][j + 1] = 0;
                 game->board[i][j + 1] = 0;
+                flag = 1;
                 if (j + 2 != HEIGHT && temp_value == game->board[i][j + 2]) {
                     temp[i][j + 2] = 0;
                     game->board[i][j + 2] = 0;
+                } else {
+                    flag = 0;
                 }
-                if (j + 3 != HEIGHT && temp_value == game->board[i][j + 3]) {
+                if (j + 3 != HEIGHT && temp_value == game->board[i][j + 3] && flag == 1) {
                     temp[i][j + 3] = 0;
                     game->board[i][j + 3] = 0;
+                } else {
+                    flag = 0;
+                }
+                if (j + 4 != HEIGHT && temp_value == game->board[i][j + 4] && flag == 1) {
+                    temp[i][j + 4] = 0;
+                    game->board[i][j + 4] = 0;
                 }
                 if (temp_value == game->board[i][j - 2]) {
                     temp[i][j - 2] = 0;
                     game->board[i][j - 2] = 0;
                 }
-            } else if (i - 1 >= 0 && temp_value == game->board[i - 1][j] && temp_value == game->board[i + 1][j]) {
+            }
+            if (i - 1 >= 0 && temp_value == game->board[i - 1][j] && temp_value == game->board[i + 1][j]) {
                 temp[i][j] = 0;
                 temp[i - 1][j] = 0;
                 temp[i + 1][j] = 0;
                 game->board[i + 1][j] = 0;
+                flag = 1;
                 if (i + 2 < WIDTH && temp_value == game->board[i + 2][j]) {
                     temp[i + 2][j] = 0;
                     game->board[i + 2][j] = 0;
+                } else {
+                    flag = 0;
                 }
-                if (i - 2 > 0) {
-                    if (temp_value == game->board[i - 2][j]) {
-                        temp[i - 2][j] = 0;
-                        game->board[i - 2][j] = 0;
-                    }
+                if (i + 3 < WIDTH && temp_value == game->board[i + 3][j] && flag == 1) {
+                    temp[i + 3][j] = 0;
+                    game->board[i + 3][j] = 0;
                 }
             }
         }
@@ -365,10 +357,7 @@ void block_swap_values(struct s_game *game) {
 }
 
 void draw_board(struct s_game *game) {
-    /*if(game->block == NULL) {
-        printf("Game over");
-        return;
-    }*/
+
     int block1x = -1, block1y = -1, block2x = -1, block2y = -1, block3x = -1, block3y= -1;
     if (game->is_over != 1 && game->block != NULL) {
         switch (game->block->direction) {
