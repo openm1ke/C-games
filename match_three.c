@@ -128,9 +128,7 @@ struct s_block *init_block() {
 }
 
 void block_check_collision(struct s_game *game, int step) {
-
-    if(game->is_over == 1 || game->block == NULL) return;
-
+    if (game->is_over == 1 || game->block == NULL) return;
     int d = game->block->direction;
     switch (step) {
         case 0:
@@ -180,7 +178,8 @@ void block_check_collision(struct s_game *game, int step) {
                     game->is_over = 1;
                     return;
                 }
-                if (d == 0 && game->block->x == 0 && (game->board[game->block->x + 1][game->block->y + 1] > 0 ||
+                if (d == 0 && game->block->x == 0 &&
+                (game->board[game->block->x + 1][game->block->y + 1] > 0 ||
                                       game->board[game->block->x + 1][game->block->y - 1] > 0 ||
                                       game->board[game->block->x + 1][game->block->y] > 0)) {
                     game->is_over = 1;
@@ -215,7 +214,6 @@ void block_check_collision(struct s_game *game, int step) {
 }
 
 void board_save_values(struct s_game *game) {
-
     if (game->block->direction == 1 && game->block->x - 1 < 0) {
         game->is_over = 1;
         return;
@@ -325,7 +323,8 @@ int **init_temp_board(struct s_game *game) {
                 }
             }
             flag = 0;
-            if ((i - 1 >= 0 && i + 1 < HEIGHT) && temp_value == game->board[i - 1][j] && temp_value == game->board[i + 1][j] && temp_value != 0) {
+            if ((i - 1 >= 0 && i + 1 < HEIGHT) &&
+            temp_value == game->board[i - 1][j] && temp_value == game->board[i + 1][j] && temp_value != 0) {
                 temp[i][j] = 0;
                 temp[i - 1][j] = 0;
                 temp[i + 1][j] = 0;
@@ -355,8 +354,7 @@ void block_swap_values(struct s_game *game) {
 }
 
 void draw_board(struct s_game *game) {
-
-    int block1x = -1, block1y = -1, block2x = -1, block2y = -1, block3x = -1, block3y= -1;
+    int block1x = -1, block1y = -1, block2x = -1, block2y = -1, block3x = -1, block3y = -1;
     if (game->is_over != 1 && game->block != NULL) {
         switch (game->block->direction) {
             case 1:
@@ -380,7 +378,6 @@ void draw_board(struct s_game *game) {
 
     for (int i = 0; i < HEIGHT + 1; i++) {
         for (int j = 0; j < WIDTH + 1; j++) {
-
             if (i + 1== HEIGHT + 1) {
                 putchar(WALL1);
             } else if (j == 0 || j + 2 == WIDTH + 2) {
