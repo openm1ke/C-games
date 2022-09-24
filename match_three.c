@@ -41,7 +41,7 @@ void board_save_values(struct s_game *game);
 int **init_temp_board(struct s_game *game);
 int count_board_values(int **board);
 void temp_delete_zeros(int **temp);
-int check_board_diff(int ** board1, int ** board2);
+int check_board_diff(int **board1, int **board2);
 
 struct s_block *init_block();
 int **init_board();
@@ -72,8 +72,7 @@ int main() {
             c = getchar();
             if (c == '=' || c == '+') game.speed -= SPEED_INC;
             if (c == '-') game.speed += SPEED_INC;
-            if (c == ' ')
-                d = 0;
+            if (c == ' ') d = 0;
             if (c == 'd') d = 1;
             if (c == 's') {
                 d = 2;
@@ -132,56 +131,47 @@ void block_check_collision(struct s_game *game, int step) {
     int d = game->block->direction;
     switch (step) {
         case 0:
-            if (d == 0 &&
-                game->block->x - 1 >= 0 &&
-                game->block->x + 1 != HEIGHT &&
+            if (d == 0 && game->block->x - 1 >= 0 && game->block->x + 1 != HEIGHT &&
                 game->board[game->block->x + 1][game->block->y] == 0 &&
                 game->board[game->block->x - 1][game->block->y] == 0)
-                    game->block->direction = 1 - game->block->direction;
-            if (d == 1 && game->block->x >= 0 &&
-                game->block->y - 1 != 0 &&
-                game->block->y + 1 != WIDTH &&
+                game->block->direction = 1 - game->block->direction;
+            if (d == 1 && game->block->x >= 0 && game->block->y - 1 != 0 && game->block->y + 1 != WIDTH &&
                 game->board[game->block->x][game->block->y + 1] == 0 &&
                 game->board[game->block->x][game->block->y - 1] == 0)
-                    game->block->direction = 1 - game->block->direction;
+                game->block->direction = 1 - game->block->direction;
             break;
         case 1:
             if (game->block->x - 1 < 0) break;
             if (d == 0 &&
-               (game->block->y + 2 >= WIDTH ||
-                game->board[game->block->x][game->block->y + 2 ] != 0))
-                    break;
+                (game->block->y + 2 >= WIDTH || game->board[game->block->x][game->block->y + 2] != 0))
+                break;
             if (d == 1 &&
-                    (game->block->y + 1 == WIDTH ||
-                game->board[game->block->x][game->block->y + 1] != 0 ||
-                game->board[game->block->x - 1][game->block->y + 1] != 0 ||
-                game->board[game->block->x + 1][game->block->y + 1] != 0))
-                    break;
+                (game->block->y + 1 == WIDTH || game->board[game->block->x][game->block->y + 1] != 0 ||
+                 game->board[game->block->x - 1][game->block->y + 1] != 0 ||
+                 game->board[game->block->x + 1][game->block->y + 1] != 0))
+                break;
             if ((d == 0 && game->board[game->block->x][game->block->y + 2] == 0) ||
-                (d == 1 &&
-                game->board[game->block->x][game->block->y + 1] == 0 &&
-                game->board[game->block->x + 1][game->block->y + 1] == 0 &&
-                game->board[game->block->x - 1][game->block->y + 1] == 0))
-                    game->block->y++;
+                (d == 1 && game->board[game->block->x][game->block->y + 1] == 0 &&
+                 game->board[game->block->x + 1][game->block->y + 1] == 0 &&
+                 game->board[game->block->x - 1][game->block->y + 1] == 0))
+                game->block->y++;
             break;
         case 2:
-            if ((d == 1 &&
-                 game->board[game->block->x + 2][game->block->y] == 0 &&
+            if ((d == 1 && game->board[game->block->x + 2][game->block->y] == 0 &&
                  game->block->x + 2 != HEIGHT) ||
                 (d == 0 && game->board[game->block->x + 1][game->block->y] == 0 &&
                  game->board[game->block->x + 1][game->block->y + 1] == 0 &&
-                 game->board[game->block->x + 1][game->block->y - 1] == 0 &&
-                 game->block->x + 1 != HEIGHT)) {
-                    game->block->x++;
+                 game->board[game->block->x + 1][game->block->y - 1] == 0 && game->block->x + 1 != HEIGHT)) {
+                game->block->x++;
             } else {
                 if (d == 1 && game->block->x <= 0) {
                     game->is_over = 1;
                     return;
                 }
                 if (d == 0 && game->block->x == 0 &&
-                (game->board[game->block->x + 1][game->block->y + 1] > 0 ||
-                                      game->board[game->block->x + 1][game->block->y - 1] > 0 ||
-                                      game->board[game->block->x + 1][game->block->y] > 0)) {
+                    (game->board[game->block->x + 1][game->block->y + 1] > 0 ||
+                     game->board[game->block->x + 1][game->block->y - 1] > 0 ||
+                     game->board[game->block->x + 1][game->block->y] > 0)) {
                     game->is_over = 1;
                     return;
                 }
@@ -191,19 +181,14 @@ void block_check_collision(struct s_game *game, int step) {
             break;
         case 3:
             if (game->block->x - 1 < 0) break;
-            if (d == 0 &&
-                (game->block->y - 2 <= 0 ||
-                 game->board[game->block->x][game->block->y - 2 ] != 0))
+            if (d == 0 && (game->block->y - 2 <= 0 || game->board[game->block->x][game->block->y - 2] != 0))
                 break;
-            if (d == 1 &&
-                (game->block->y - 1 == 0 ||
-                 game->board[game->block->x][game->block->y - 1] != 0 ||
-                 game->board[game->block->x - 1][game->block->y - 1] != 0 ||
-                 game->board[game->block->x + 1][game->block->y - 1] != 0))
+            if (d == 1 && (game->block->y - 1 == 0 || game->board[game->block->x][game->block->y - 1] != 0 ||
+                           game->board[game->block->x - 1][game->block->y - 1] != 0 ||
+                           game->board[game->block->x + 1][game->block->y - 1] != 0))
                 break;
             if ((d == 0 && game->board[game->block->x][game->block->y - 2] == 0) ||
-                (d == 1 &&
-                 game->board[game->block->x][game->block->y - 1] == 0 &&
+                (d == 1 && game->board[game->block->x][game->block->y - 1] == 0 &&
                  game->board[game->block->x + 1][game->block->y - 1] == 0 &&
                  game->board[game->block->x - 1][game->block->y - 1] == 0))
                 game->block->y--;
@@ -256,7 +241,7 @@ void board_save_values(struct s_game *game) {
         game->block = NULL;
     }
 }
-int check_board_diff(int ** board1, int ** board2) {
+int check_board_diff(int **board1, int **board2) {
     int diff = 0;
     for (int i = 0; i < HEIGHT; i++) {
         for (int j = 0; j < WIDTH + 1; j++) {
@@ -297,8 +282,8 @@ int **init_temp_board(struct s_game *game) {
             temp_value = game->board[i][j];
             temp[i][j] = temp_value;
             flag = 0;
-            if ((i - 1 >= 0 && i + 1 <= HEIGHT) &&
-                temp_value == game->board[i - 1][j] && temp_value == game->board[i + 1][j]) {
+            if ((i - 1 >= 0 && i + 1 <= HEIGHT) && temp_value == game->board[i - 1][j] &&
+                temp_value == game->board[i + 1][j]) {
                 temp[i][j] = 0;
                 temp[i - 1][j] = 0;
                 temp[i + 1][j] = 0;
@@ -378,7 +363,7 @@ void draw_board(struct s_game *game) {
 
     for (int i = 0; i < HEIGHT + 1; i++) {
         for (int j = 0; j < WIDTH + 1; j++) {
-            if (i + 1== HEIGHT + 1) {
+            if (i + 1 == HEIGHT + 1) {
                 putchar(WALL1);
             } else if (j == 0 || j + 2 == WIDTH + 2) {
                 putchar(WALL2);
@@ -386,11 +371,11 @@ void draw_board(struct s_game *game) {
                 printf(GAMEOVER);
                 j += strlen(GAMEOVER) - 1;
             } else if (i == block1x && j == block1y) {
-                    printf("%d", game->block->v1);
+                printf("%d", game->block->v1);
             } else if (i == block2x && j == block2y) {
-                    printf("%d", game->block->v2);
+                printf("%d", game->block->v2);
             } else if (i == block3x && j == block3y) {
-                    printf("%d", game->block->v3);
+                printf("%d", game->block->v3);
             } else if (game->board[i][j] > 0) {
                 printf("%d", game->board[i][j]);
             } else {
