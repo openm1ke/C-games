@@ -5,6 +5,17 @@ Main rules:
 2) Only ASCII symbols
 3) Code-style and no-leaks
 ---
+### **ASCII Starfighter**
+> ASCII Starfighter is a retro terminal window game inspired by classics of the genre such as Spacewar! (1962), Space Invaders (1978) and Asteroids (1979). In this game, you control a cute spaceship made in ASCII art, dodge falling meteorites and destroy them with shots. Simple controls and dynamic graphics create the atmosphere of a real space battle, returning you to the era of the birth of computer games.
+
+![Stars](misc/stars.gif "Stars")
+
+###### Compilation:
+>**make stars**
+
+###### Execute:
+>**./stars**
+---
 ### **Match-3**
 > A tile-matching video game is a type of puzzle video game where the player manipulates tiles in order to make them disappear according to a matching criterion. In many tile-matching games, that criterion is to place a given number of tiles of the same type so that they adjoin each other. That number is often three, and these games are called match-three games.
 

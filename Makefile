@@ -1,6 +1,6 @@
 CC=gcc
 CFLAGS=-Wextra -Werror -Wall
-FILES=snake pong game_of_life match_three
+FILES=snake pong game_of_life match_three stars
 
 all: $(FILES)
 
@@ -15,6 +15,9 @@ game_of_life: game_of_life.c
 
 match_three: match_three.c
 	$(CC) $(CFLAGS) match_three.c -o match_three
+
+stars: stars.c
+	$(CC) $(CFLAGS) stars.c -o stars
 
 clean:
 	rm -rf *.o $(FILES)
