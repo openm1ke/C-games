@@ -1,6 +1,7 @@
 CC=gcc
 CFLAGS=-Wextra -Werror -Wall
-FILES=snake pong game_of_life match_three stars
+
+FILES=snake pong game_of_life match_three stars tetris
 
 all: $(FILES)
 
