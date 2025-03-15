@@ -222,6 +222,12 @@ char tetromino[NUM_PIECES][NUM_ROTATIONS][MATRIX_SIZE][MATRIX_SIZE] = {
 // Игровое поле: 0 - пустая клетка, 1 - заполненная
 int field[FIELD_HEIGHT][FIELD_WIDTH];
 
+// Глобальные переменные для падающей фигуры
+int falling_piece = 1;      // Например, T-тетромино
+int falling_rotation = 0;     // Исходное положение
+int falling_x = 3;          // Начальное положение по горизонтали (в клетках)
+int falling_y = 0;          // Начальное положение по вертикали
+
 // Функция для очистки экрана
 void clearScreen() {
     printf("\033[H\033[J");
@@ -242,20 +248,16 @@ void drawStats() {
     printf("Score: %d", 1234);
 }
 
-// Функция вывода следующей фигуры (пример: T-тетромино)
+// Функция вывода следующей фигуры из массива tetromino
 void drawNextPiece() {
-    const char *next_piece[4] = {
-        "    ",
-        " XXX",
-        "  X ",
-        "    "
-    };
+    int next_piece = 2;     // Например, следующая фигура — квадрат (O)
+    int next_rotation = 0;  // У квадрата все повороты одинаковы
     moveCursor(NEXT_PIECE_ROW, NEXT_PIECE_COL);
     printf("Next Piece:");
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < MATRIX_SIZE; i++) {
         moveCursor(NEXT_PIECE_ROW + i + 1, NEXT_PIECE_COL);
-        for (int j = 0; j < 4; j++) {
-            char c = next_piece[i][j];
+        for (int j = 0; j < MATRIX_SIZE; j++) {
+            char c = tetromino[next_piece][next_rotation][i][j];
             if (c == 'X')
                 printf("[]");
             else
@@ -319,33 +321,80 @@ void drawHints() {
     printf("Space - Drop");
 }
 
+// Функция, рисующая падающую фигуру поверх поля
+// Выводится из массива tetromino с учётом её позиции (falling_x, falling_y)
+void drawFallingPiece() {
+    for (int i = 0; i < MATRIX_SIZE; i++) {
+        for (int j = 0; j < MATRIX_SIZE; j++) {
+            if (tetromino[falling_piece][falling_rotation][i][j] == 'X') {
+                // Рассчитываем позицию на экране:
+                // Содержимое игрового поля выводится начиная с FIELD_ROW+1 и FIELD_COL+2
+                int screen_row = FIELD_ROW + 1 + falling_y + i;
+                int screen_col = FIELD_COL + 2 + (falling_x + j) * CELL_WIDTH;
+                moveCursor(screen_row, screen_col);
+                printf("[]");
+            }
+        }
+    }
+}
+
+// Тестовая функция, которая опускает падающую фигуру до дна
+void dropTest() {
+    // Будем двигать фигуру вниз до тех пор, пока её нижняя часть не достигнет нижней границы поля
+    while (falling_y < FIELD_HEIGHT - MATRIX_SIZE + 1) {
+        clearScreen();
+        drawStats();
+        drawNextPiece();
+        drawField();
+        drawHints();
+        drawFallingPiece();
+        // Обновляем экран
+        fflush(stdout);
+        // Ждём некоторое время (начальная скорость)
+        usleep(300000); // 300 мс, можно регулировать
+        // Опускаем фигуру на одну клетку
+        falling_y++;
+    }
+}
+
 void setCursorDown() {
     moveCursor(BOTTOM_ROW, 0);
+    printf("\033[?25h");
+}
+
+void hideCursor() {
+    printf("\033[?25l");
+}
+
+void showCursor() {
+    printf("\033[?25h");
 }
 
 int main(void) {
+    hideCursor();
     // Инициализируем игровое поле тестовыми данными:
-    // Заполняем поле нулями, затем для примера в нижней строке и в середине ставим заполненные клетки.
     memset(field, 0, sizeof(field));
     for (int x = 0; x < FIELD_WIDTH; x++) {
-        // Пример: заполняем каждую вторую клетку в нижней строке
         field[FIELD_HEIGHT - 1][x] = (x % 2 == 0) ? 1 : 0;
     }
-    // Несколько заполненных клеток в середине
     field[10][3] = 1;
     field[10][4] = 1;
     field[11][4] = 1;
     
-    // Очищаем экран и выводим все зоны
-    clearScreen();
-    drawStats();
-    drawNextPiece();
-    drawField();
-    drawHints();
+    // Сбрасываем позицию падающей фигуры
+    falling_piece = 1;      // T-тетромино
+    falling_rotation = 0;
+    falling_x = 3;
+    falling_y = 0;
+    
+    // Запускаем тестовую функцию падения
+    dropTest();
+    
+    // После завершения теста устанавливаем курсор вниз и ждём перед выходом
     setCursorDown();
+    showCursor();
     fflush(stdout);
-    // Ждём 5 секунд, чтобы можно было увидеть результат
-    //sleep(15);
+    sleep(3);
     
     return 0;
 }

@@ -1,3 +1,10 @@
 .vscode/
 .fleet/
 .idea/
+*.o
+game_of_life
+match_three
+pong
+snake
+stars
+tetris
