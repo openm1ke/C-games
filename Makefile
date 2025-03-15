@@ -23,9 +23,6 @@ stars: clean stars.c
 tetris: clean tetris.c
 	$(CC) $(CFLAGS) tetris.c -o tetris && ./tetris
 
-stars: stars.c
-	$(CC) $(CFLAGS) stars.c -o stars
-
 clean:
 	rm -rf *.o $(FILES)
 
