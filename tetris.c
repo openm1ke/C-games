@@ -8,6 +8,7 @@
 #include <time.h>
 #include <unistd.h>
 
+#define GAME_SPEED 500000
 #define NUM_PIECES 7
 #define NUM_ROTATIONS 4
 #define MATRIX_SIZE 4
@@ -28,6 +29,11 @@
 
 #define HINTS_ROW 8
 #define HINTS_COL 42
+
+#define CENTER_ROW 11
+#define CENTER_COL 21
+
+#define SQUARE "[]"
 
 char tetromino[NUM_PIECES][NUM_ROTATIONS][MATRIX_SIZE][MATRIX_SIZE] = {
     {{{'.', '.', '.', '.'}, {'X', 'X', 'X', 'X'}, {'.', '.', '.', '.'}, {'.', '.', '.', '.'}},
@@ -85,6 +91,7 @@ typedef struct {
     int nextPiece;
     int nextRotation;
     int gameOver;
+    int paused;
 } GameState;
 
 void clearScreen() { printf("\033[H\033[J"); }
@@ -99,6 +106,16 @@ void setCursorDown() {
 void hideCursor() { printf("\033[?25l"); }
 
 void showCursor() { printf("\033[?25h"); }
+
+void showGamePaused() {
+    moveCursor(CENTER_ROW, CENTER_COL);
+    printf("Game Paused");
+}
+
+void showGameOver() {
+    moveCursor(CENTER_ROW, CENTER_COL);
+    printf("Game Over!");
+}
 
 void drawStats(GameState *state) {
     moveCursor(STATS_ROW, STATS_COL);
@@ -119,7 +136,7 @@ void drawNextPiece(GameState *state) {
         for (int j = 0; j < MATRIX_SIZE; j++) {
             char c = tetromino[piece][rotation][i][j];
             if (c == 'X')
-                printf("[]");
+                printf(SQUARE);
             else
                 printf("  ");
         }
@@ -141,7 +158,7 @@ void drawField(GameState *state) {
             if (state->field[y][x] == 0)
                 printf("  ");
             else
-                printf("[]");
+                printf(SQUARE);
         }
         printf("!>");
     }
@@ -172,6 +189,8 @@ void drawHints() {
     moveCursor(HINTS_ROW + 4, HINTS_COL);
     printf("S - Down");
     moveCursor(HINTS_ROW + 5, HINTS_COL);
+    printf("P - Pause");
+    moveCursor(HINTS_ROW + 6, HINTS_COL);
     printf("Space - Drop");
 }
 
@@ -182,7 +201,7 @@ void drawFallingPiece(GameState *state) {
                 int screen_row = FIELD_ROW + 1 + state->currentY + i;
                 int screen_col = FIELD_COL + 2 + (state->currentX + j) * CELL_WIDTH;
                 moveCursor(screen_row, screen_col);
-                printf("[]");
+                printf(SQUARE);
             }
         }
     }
@@ -241,10 +260,28 @@ int clearLines(GameState *state) {
     return linesCleared;
 }
 
+int computePoints(int linesCleared, int level) {
+    int points = 0;
+    switch (linesCleared) {
+        case 1: points = 40 * (level + 1); break;
+        case 2: points = 100 * (level + 1); break;
+        case 3: points = 300 * (level + 1); break;
+        case 4: points = 1200 * (level + 1); break;
+        default: break;
+    }
+    return points;
+}
+
 void updateScore(GameState *state, int linesCleared) {
+    state->score += computePoints(linesCleared, state->level);
     state->lines += linesCleared;
-    state->score += linesCleared * 100;
-    if (state->lines / 10 > state->level) state->level = state->lines / 10;
+    state->level = state->lines / 10;
+}
+
+useconds_t getGameSpeed(int level) {
+    useconds_t speed = GAME_SPEED - level * 40000;
+    if (speed < 100000) speed = 100000;
+    return speed;
 }
 
 int generateRandomPiece(void) { return rand() % NUM_PIECES; }
@@ -286,6 +323,10 @@ void processInput(GameState *state) {
                     state->currentY++;
                 }
                 break;
+            case 'p':
+            case 'P':
+                state->paused = !state->paused;  // Переключаем режим паузы
+                break;
             default:
                 break;
         }
@@ -293,9 +334,14 @@ void processInput(GameState *state) {
 }
 
 void gameLoop(GameState *state) {
-    const useconds_t gameSpeed = 500000;
     while (!state->gameOver) {
         processInput(state);
+        
+        if (state->paused) {
+            showGamePaused();
+            usleep(10000);
+            continue;
+        }
 
         if (!collision(state, state->currentX, state->currentY + 1, state->currentPiece,
                        state->currentRotation)) {
@@ -326,7 +372,7 @@ void gameLoop(GameState *state) {
         drawHints();
         drawFallingPiece(state);
         fflush(stdout);
-        usleep(gameSpeed);
+        usleep(getGameSpeed(state->level));
     }
 }
 
@@ -355,14 +401,10 @@ int main(void) {
 
     gameLoop(&game);
 
-    moveCursor(FIELD_ROW, FIELD_COL);
-    printf("Game Over!\n");
+    showGameOver();
     moveCursor(BOTTOM_ROW, 0);
-
     showCursor();
     fflush(stdout);
-
     tcsetattr(STDIN_FILENO, TCSANOW, &orig_term);
-
     return 0;
 }
