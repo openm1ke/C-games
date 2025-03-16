@@ -9,7 +9,7 @@ Main rules:
 
 > Tetris is one of the most iconic and influential video games ever created. Developed in 1984 by Russian software engineer Alexey Pajitnov, its simple yet captivating gameplay turned it into a global phenomenon. This project is an approximation of the original Tetris experience, faithfully implemented in C to capture the timeless essence of the classic game.
 
-![Tetris](misc/tetris.gif "Tetris")
+![Tetris](misc/tetris3.gif "Tetris")
 
 ###### Compile and execute:
 ```bash
