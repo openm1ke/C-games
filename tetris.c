@@ -34,6 +34,8 @@
 #define CENTER_COL 21
 
 #define SQUARE "[]"
+#define SPACE " ."
+#define BLANK "  "
 
 char tetromino[NUM_PIECES][NUM_ROTATIONS][MATRIX_SIZE][MATRIX_SIZE] = {
     {{{'.', '.', '.', '.'}, {'X', 'X', 'X', 'X'}, {'.', '.', '.', '.'}, {'.', '.', '.', '.'}},
@@ -71,13 +73,6 @@ char tetromino[NUM_PIECES][NUM_ROTATIONS][MATRIX_SIZE][MATRIX_SIZE] = {
      {{'.', '.', 'X', '.'}, {'.', 'X', 'X', '.'}, {'.', 'X', '.', '.'}, {'.', '.', '.', '.'}},
      {{'.', '.', '.', '.'}, {'.', 'X', 'X', '.'}, {'.', '.', 'X', 'X'}, {'.', '.', '.', '.'}},
      {{'.', '.', '.', '.'}, {'.', '.', 'X', '.'}, {'.', 'X', 'X', '.'}, {'.', 'X', '.', '.'}}}};
-
-int field[FIELD_HEIGHT][FIELD_WIDTH];
-
-int falling_piece = 1;
-int falling_rotation = 0;
-int falling_x = 3;
-int falling_y = 0;
 
 typedef struct {
     int field[FIELD_HEIGHT][FIELD_WIDTH];
@@ -138,7 +133,7 @@ void drawNextPiece(GameState *state) {
             if (c == 'X')
                 printf(SQUARE);
             else
-                printf("  ");
+                printf(BLANK);
         }
     }
 }
@@ -146,8 +141,8 @@ void drawNextPiece(GameState *state) {
 void drawField(GameState *state) {
     moveCursor(FIELD_ROW, FIELD_COL);
     printf("<!");
-    for (int i = 0; i < FIELD_WIDTH * CELL_WIDTH; i++) {
-        printf(" ");
+    for (int i = 0; i < FIELD_WIDTH; i++) {
+        printf(SPACE);
     }
     printf("!>");
 
@@ -156,7 +151,7 @@ void drawField(GameState *state) {
         printf("<!");
         for (int x = 0; x < FIELD_WIDTH; x++) {
             if (state->field[y][x] == 0)
-                printf("  ");
+                printf(SPACE);
             else
                 printf(SQUARE);
         }
