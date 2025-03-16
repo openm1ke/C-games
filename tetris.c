@@ -1,18 +1,22 @@
+#define _XOPEN_SOURCE 500
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/ioctl.h>
+#include <termios.h>
+#include <time.h>
 #include <unistd.h>
 
 #define NUM_PIECES 7
 #define NUM_ROTATIONS 4
 #define MATRIX_SIZE 4
 
-#define FIELD_WIDTH 10      // Ширина игрового поля в клетках
-#define FIELD_HEIGHT 20     // Высота игрового поля в клетках
-#define CELL_WIDTH 2        // Каждая клетка выводится как 2 символа ("[]" или "  ")
+#define FIELD_WIDTH 10
+#define FIELD_HEIGHT 20
+#define CELL_WIDTH 2
 #define BOTTOM_ROW 24
 
-// Определяем позиции зон на экране (номер строки и столбца)
 #define STATS_ROW 8
 #define STATS_COL 1
 
@@ -25,239 +29,95 @@
 #define HINTS_ROW 8
 #define HINTS_COL 42
 
-// Определяем четырехмерный массив для всех фигур.
 char tetromino[NUM_PIECES][NUM_ROTATIONS][MATRIX_SIZE][MATRIX_SIZE] = {
-    // Фигура I
-    {
-        {   // 0°: .... XXXX .... ....
-            {'.', '.', '.', '.'},
-            {'X', 'X', 'X', 'X'},
-            {'.', '.', '.', '.'},
-            {'.', '.', '.', '.'}
-        },
-        {   // 90°: ..X. ..X. ..X. ..X.
-            {'.', '.', 'X', '.'},
-            {'.', '.', 'X', '.'},
-            {'.', '.', 'X', '.'},
-            {'.', '.', 'X', '.'}
-        },
-        {   // 180°: .... .... XXXX ....
-            {'.', '.', '.', '.'},
-            {'.', '.', '.', '.'},
-            {'X', 'X', 'X', 'X'},
-            {'.', '.', '.', '.'}
-        },
-        {   // 270°: .X.. .X.. .X.. .X..
-            {'.', 'X', '.', '.'},
-            {'.', 'X', '.', '.'},
-            {'.', 'X', '.', '.'},
-            {'.', 'X', '.', '.'}
-        }
-    },
-    // Фигура T
-    {
-        {   // 0°:
-            {'.', '.', '.', '.'},
-            {'.', 'X', 'X', 'X'},
-            {'.', '.', 'X', '.'},
-            {'.', '.', '.', '.'}
-        },
-        {   // 90°:
-            {'.', '.', '.', '.'},
-            {'.', '.', 'X', '.'},
-            {'.', 'X', 'X', '.'},
-            {'.', '.', 'X', '.'}
-        },
-        {   // 180°:
-            {'.', '.', '.', '.'},
-            {'.', 'X', '.', '.'},
-            {'X', 'X', 'X', '.'},
-            {'.', '.', '.', '.'}
-        },
-        {   // 270°:
-            {'.', 'X', '.', '.'},
-            {'.', 'X', 'X', '.'},
-            {'.', 'X', '.', '.'},
-            {'.', '.', '.', '.'}
-        }
-    },
-    // Фигура O (квадрат)
-    {
-        {   // 0°:
-            {'.', '.', '.', '.'},
-            {'.', 'X', 'X', '.'},
-            {'.', 'X', 'X', '.'},
-            {'.', '.', '.', '.'}
-        },
-        // У квадрата все повороты одинаковы
-        {
-            {'.', '.', '.', '.'},
-            {'.', 'X', 'X', '.'},
-            {'.', 'X', 'X', '.'},
-            {'.', '.', '.', '.'}
-        },
-        {
-            {'.', '.', '.', '.'},
-            {'.', 'X', 'X', '.'},
-            {'.', 'X', 'X', '.'},
-            {'.', '.', '.', '.'}
-        },
-        {
-            {'.', '.', '.', '.'},
-            {'.', 'X', 'X', '.'},
-            {'.', 'X', 'X', '.'},
-            {'.', '.', '.', '.'}
-        }
-    },
-    // Фигура L
-    {
-        {   // 0°:
-            {'.', 'X', 'X', '.'},
-            {'.', '.', 'X', '.'},
-            {'.', '.', 'X', '.'},
-            {'.', '.', '.', '.'}
-        },
-        {   // 90°:
-            {'.', '.', '.', '.'},
-            {'.', '.', 'X', '.'},
-            {'X', 'X', 'X', '.'},
-            {'.', '.', '.', '.'}
-        },
-        {   // 180°:
-            {'.', 'X', '.', '.'},
-            {'.', 'X', '.', '.'},
-            {'.', 'X', 'X', '.'},
-            {'.', '.', '.', '.'}
-        },
-        {   // 270°:
-            {'.', '.', '.', '.'},
-            {'.', 'X', 'X', 'X'},
-            {'.', 'X', '.', '.'},
-            {'.', '.', '.', '.'}
-        }
-    },
-    // Фигура J
-    {
-        {   // 0°:
-            {'.', 'X', 'X', '.'},
-            {'.', 'X', '.', '.'},
-            {'.', 'X', '.', '.'},
-            {'.', '.', '.', '.'}
-        },
-        {   // 90°:
-            {'.', '.', '.', '.'},
-            {'X', 'X', 'X', '.'},
-            {'.', '.', 'X', '.'},
-            {'.', '.', '.', '.'}
-        },
-        {   // 180°:
-            {'.', '.', 'X', '.'},
-            {'.', '.', 'X', '.'},
-            {'.', 'X', 'X', '.'},
-            {'.', '.', '.', '.'}
-        },
-        {   // 270°:
-            {'.', '.', '.', '.'},
-            {'.', 'X', '.', '.'},
-            {'.', 'X', 'X', 'X'},
-            {'.', '.', '.', '.'}
-        }
-    },
-    // Фигура S
-    {
-        {   // 0°:
-            {'.', '.', '.', '.'},
-            {'.', 'X', 'X', '.'},
-            {'X', 'X', '.', '.'},
-            {'.', '.', '.', '.'}
-        },
-        {   // 90°:
-            {'.', 'X', '.', '.'},
-            {'.', 'X', 'X', '.'},
-            {'.', '.', 'X', '.'},
-            {'.', '.', '.', '.'}
-        },
-        {   // 180°:
-            {'.', '.', '.', '.'},
-            {'.', '.', 'X', 'X'},
-            {'.', 'X', 'X', '.'},
-            {'.', '.', '.', '.'}
-        },
-        {   // 270°:
-            {'.', '.', '.', '.'},
-            {'.', 'X', '.', '.'},
-            {'.', 'X', 'X', '.'},
-            {'.', '.', 'X', '.'}
-        }
-    },
-    // Фигура Z
-    {
-        {   // 0°:
-            {'.', '.', '.', '.'},
-            {'X', 'X', '.', '.'},
-            {'.', 'X', 'X', '.'},
-            {'.', '.', '.', '.'}
-        },
-        {   // 90°:
-            {'.', '.', 'X', '.'},
-            {'.', 'X', 'X', '.'},
-            {'.', 'X', '.', '.'},
-            {'.', '.', '.', '.'}
-        },
-        {   // 180°:
-            {'.', '.', '.', '.'},
-            {'.', 'X', 'X', '.'},
-            {'.', '.', 'X', 'X'},
-            {'.', '.', '.', '.'}
-        },
-        {   // 270°:
-            {'.', '.', '.', '.'},
-            {'.', '.', 'X', '.'},
-            {'.', 'X', 'X', '.'},
-            {'.', 'X', '.', '.'}
-        }
-    }
-};
+    {{{'.', '.', '.', '.'}, {'X', 'X', 'X', 'X'}, {'.', '.', '.', '.'}, {'.', '.', '.', '.'}},
+     {{'.', '.', 'X', '.'}, {'.', '.', 'X', '.'}, {'.', '.', 'X', '.'}, {'.', '.', 'X', '.'}},
+     {{'.', '.', '.', '.'}, {'.', '.', '.', '.'}, {'X', 'X', 'X', 'X'}, {'.', '.', '.', '.'}},
+     {{'.', 'X', '.', '.'}, {'.', 'X', '.', '.'}, {'.', 'X', '.', '.'}, {'.', 'X', '.', '.'}}},
 
-// Игровое поле: 0 - пустая клетка, 1 - заполненная
+    {{{'.', '.', '.', '.'}, {'.', 'X', 'X', 'X'}, {'.', '.', 'X', '.'}, {'.', '.', '.', '.'}},
+     {{'.', '.', '.', '.'}, {'.', '.', 'X', '.'}, {'.', 'X', 'X', '.'}, {'.', '.', 'X', '.'}},
+     {{'.', '.', '.', '.'}, {'.', 'X', '.', '.'}, {'X', 'X', 'X', '.'}, {'.', '.', '.', '.'}},
+     {{'.', 'X', '.', '.'}, {'.', 'X', 'X', '.'}, {'.', 'X', '.', '.'}, {'.', '.', '.', '.'}}},
+
+    {{{'.', '.', '.', '.'}, {'.', 'X', 'X', '.'}, {'.', 'X', 'X', '.'}, {'.', '.', '.', '.'}},
+
+     {{'.', '.', '.', '.'}, {'.', 'X', 'X', '.'}, {'.', 'X', 'X', '.'}, {'.', '.', '.', '.'}},
+     {{'.', '.', '.', '.'}, {'.', 'X', 'X', '.'}, {'.', 'X', 'X', '.'}, {'.', '.', '.', '.'}},
+     {{'.', '.', '.', '.'}, {'.', 'X', 'X', '.'}, {'.', 'X', 'X', '.'}, {'.', '.', '.', '.'}}},
+
+    {{{'.', 'X', 'X', '.'}, {'.', '.', 'X', '.'}, {'.', '.', 'X', '.'}, {'.', '.', '.', '.'}},
+     {{'.', '.', '.', '.'}, {'.', '.', 'X', '.'}, {'X', 'X', 'X', '.'}, {'.', '.', '.', '.'}},
+     {{'.', 'X', '.', '.'}, {'.', 'X', '.', '.'}, {'.', 'X', 'X', '.'}, {'.', '.', '.', '.'}},
+     {{'.', '.', '.', '.'}, {'.', 'X', 'X', 'X'}, {'.', 'X', '.', '.'}, {'.', '.', '.', '.'}}},
+
+    {{{'.', 'X', 'X', '.'}, {'.', 'X', '.', '.'}, {'.', 'X', '.', '.'}, {'.', '.', '.', '.'}},
+     {{'.', '.', '.', '.'}, {'X', 'X', 'X', '.'}, {'.', '.', 'X', '.'}, {'.', '.', '.', '.'}},
+     {{'.', '.', 'X', '.'}, {'.', '.', 'X', '.'}, {'.', 'X', 'X', '.'}, {'.', '.', '.', '.'}},
+     {{'.', '.', '.', '.'}, {'.', 'X', '.', '.'}, {'.', 'X', 'X', 'X'}, {'.', '.', '.', '.'}}},
+
+    {{{'.', '.', '.', '.'}, {'.', 'X', 'X', '.'}, {'X', 'X', '.', '.'}, {'.', '.', '.', '.'}},
+     {{'.', 'X', '.', '.'}, {'.', 'X', 'X', '.'}, {'.', '.', 'X', '.'}, {'.', '.', '.', '.'}},
+     {{'.', '.', '.', '.'}, {'.', '.', 'X', 'X'}, {'.', 'X', 'X', '.'}, {'.', '.', '.', '.'}},
+     {{'.', '.', '.', '.'}, {'.', 'X', '.', '.'}, {'.', 'X', 'X', '.'}, {'.', '.', 'X', '.'}}},
+
+    {{{'.', '.', '.', '.'}, {'X', 'X', '.', '.'}, {'.', 'X', 'X', '.'}, {'.', '.', '.', '.'}},
+     {{'.', '.', 'X', '.'}, {'.', 'X', 'X', '.'}, {'.', 'X', '.', '.'}, {'.', '.', '.', '.'}},
+     {{'.', '.', '.', '.'}, {'.', 'X', 'X', '.'}, {'.', '.', 'X', 'X'}, {'.', '.', '.', '.'}},
+     {{'.', '.', '.', '.'}, {'.', '.', 'X', '.'}, {'.', 'X', 'X', '.'}, {'.', 'X', '.', '.'}}}};
+
 int field[FIELD_HEIGHT][FIELD_WIDTH];
 
-// Глобальные переменные для падающей фигуры
-int falling_piece = 1;      // Например, T-тетромино
-int falling_rotation = 0;     // Исходное положение
-int falling_x = 3;          // Начальное положение по горизонтали (в клетках)
-int falling_y = 0;          // Начальное положение по вертикали
+int falling_piece = 1;
+int falling_rotation = 0;
+int falling_x = 3;
+int falling_y = 0;
 
-// Функция для очистки экрана
-void clearScreen() {
-    printf("\033[H\033[J");
+typedef struct {
+    int field[FIELD_HEIGHT][FIELD_WIDTH];
+    int score;
+    int lines;
+    int level;
+    int currentPiece;
+    int currentRotation;
+    int currentX;
+    int currentY;
+    int nextPiece;
+    int nextRotation;
+    int gameOver;
+} GameState;
+
+void clearScreen() { printf("\033[H\033[J"); }
+
+void moveCursor(int row, int col) { printf("\033[%d;%dH", row, col); }
+
+void setCursorDown() {
+    moveCursor(BOTTOM_ROW, 0);
+    printf("\033[?25h");
 }
 
-// Функция для перемещения курсора в заданную позицию
-void moveCursor(int row, int col) {
-    printf("\033[%d;%dH", row, col);
-}
+void hideCursor() { printf("\033[?25l"); }
 
-// Функция вывода статистики (сгоревшие линии, уровень, очки)
-void drawStats() {
+void showCursor() { printf("\033[?25h"); }
+
+void drawStats(GameState *state) {
     moveCursor(STATS_ROW, STATS_COL);
-    printf("Lines: %d", 5);
+    printf("Lines: %d", state->lines);
     moveCursor(STATS_ROW + 1, STATS_COL);
-    printf("Level: %d", 2);
+    printf("Level: %d", state->level);
     moveCursor(STATS_ROW + 2, STATS_COL);
-    printf("Score: %d", 1234);
+    printf("Score: %d", state->score);
 }
 
-// Функция вывода следующей фигуры из массива tetromino
-void drawNextPiece() {
-    int next_piece = 2;     // Например, следующая фигура — квадрат (O)
-    int next_rotation = 0;  // У квадрата все повороты одинаковы
+void drawNextPiece(GameState *state) {
+    int piece = state->nextPiece;
+    int rotation = state->nextRotation;
     moveCursor(NEXT_PIECE_ROW, NEXT_PIECE_COL);
     printf("Next Piece:");
     for (int i = 0; i < MATRIX_SIZE; i++) {
         moveCursor(NEXT_PIECE_ROW + i + 1, NEXT_PIECE_COL);
         for (int j = 0; j < MATRIX_SIZE; j++) {
-            char c = tetromino[next_piece][next_rotation][i][j];
+            char c = tetromino[piece][rotation][i][j];
             if (c == 'X')
                 printf("[]");
             else
@@ -266,30 +126,26 @@ void drawNextPiece() {
     }
 }
 
-// Функция вывода игрового поля с рамкой
-void drawField() {
-    // Верхняя граница поля
+void drawField(GameState *state) {
     moveCursor(FIELD_ROW, FIELD_COL);
     printf("<!");
     for (int i = 0; i < FIELD_WIDTH * CELL_WIDTH; i++) {
         printf(" ");
     }
     printf("!>");
-    
-    // Вывод содержимого игрового поля
+
     for (int y = 0; y < FIELD_HEIGHT; y++) {
         moveCursor(FIELD_ROW + 1 + y, FIELD_COL);
-        printf("<!");  // Левая граница
+        printf("<!");
         for (int x = 0; x < FIELD_WIDTH; x++) {
-            if (field[y][x] == 0)
+            if (state->field[y][x] == 0)
                 printf("  ");
             else
                 printf("[]");
         }
-        printf("!>"); // Правая граница
+        printf("!>");
     }
-    
-    // Нижняя граница поля (строка из "=")
+
     int bottomRow = FIELD_ROW + 1 + FIELD_HEIGHT;
     moveCursor(bottomRow, FIELD_COL);
     printf("<!");
@@ -297,15 +153,13 @@ void drawField() {
         printf("=");
     }
     printf("!>");
-    
-    // Декоративная строка под нижней границей (шаблон /\/\)
+
     moveCursor(bottomRow + 1, FIELD_COL + 2);
     for (int i = 0; i < FIELD_WIDTH; i++) {
         printf("\\/");
     }
 }
 
-// Функция вывода подсказок по управлению игрой
 void drawHints() {
     moveCursor(HINTS_ROW, HINTS_COL);
     printf("Controls:");
@@ -321,16 +175,12 @@ void drawHints() {
     printf("Space - Drop");
 }
 
-// Функция, рисующая падающую фигуру поверх поля
-// Выводится из массива tetromino с учётом её позиции (falling_x, falling_y)
-void drawFallingPiece() {
+void drawFallingPiece(GameState *state) {
     for (int i = 0; i < MATRIX_SIZE; i++) {
         for (int j = 0; j < MATRIX_SIZE; j++) {
-            if (tetromino[falling_piece][falling_rotation][i][j] == 'X') {
-                // Рассчитываем позицию на экране:
-                // Содержимое игрового поля выводится начиная с FIELD_ROW+1 и FIELD_COL+2
-                int screen_row = FIELD_ROW + 1 + falling_y + i;
-                int screen_col = FIELD_COL + 2 + (falling_x + j) * CELL_WIDTH;
+            if (tetromino[state->currentPiece][state->currentRotation][i][j] == 'X') {
+                int screen_row = FIELD_ROW + 1 + state->currentY + i;
+                int screen_col = FIELD_COL + 2 + (state->currentX + j) * CELL_WIDTH;
                 moveCursor(screen_row, screen_col);
                 printf("[]");
             }
@@ -338,63 +188,181 @@ void drawFallingPiece() {
     }
 }
 
-// Тестовая функция, которая опускает падающую фигуру до дна
-void dropTest() {
-    // Будем двигать фигуру вниз до тех пор, пока её нижняя часть не достигнет нижней границы поля
-    while (falling_y < FIELD_HEIGHT - MATRIX_SIZE + 1) {
-        clearScreen();
-        drawStats();
-        drawNextPiece();
-        drawField();
-        drawHints();
-        drawFallingPiece();
-        // Обновляем экран
-        fflush(stdout);
-        // Ждём некоторое время (начальная скорость)
-        usleep(300000); // 300 мс, можно регулировать
-        // Опускаем фигуру на одну клетку
-        falling_y++;
+int collision(GameState *state, int x, int y, int piece, int rotation) {
+    for (int i = 0; i < MATRIX_SIZE; i++) {
+        for (int j = 0; j < MATRIX_SIZE; j++) {
+            if (tetromino[piece][rotation][i][j] == 'X') {
+                int fx = x + j;
+                int fy = y + i;
+                if (fx < 0 || fx >= FIELD_WIDTH || fy < 0 || fy >= FIELD_HEIGHT) return 1;
+                if (state->field[fy][fx] != 0) return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+void lockPiece(GameState *state) {
+    for (int i = 0; i < MATRIX_SIZE; i++) {
+        for (int j = 0; j < MATRIX_SIZE; j++) {
+            if (tetromino[state->currentPiece][state->currentRotation][i][j] == 'X') {
+                int fx = state->currentX + j;
+                int fy = state->currentY + i;
+                if (fx >= 0 && fx < FIELD_WIDTH && fy >= 0 && fy < FIELD_HEIGHT) {
+                    state->field[fy][fx] = 1;
+                }
+            }
+        }
     }
 }
 
-void setCursorDown() {
-    moveCursor(BOTTOM_ROW, 0);
-    printf("\033[?25h");
+int clearLines(GameState *state) {
+    int linesCleared = 0;
+    for (int y = 0; y < FIELD_HEIGHT; y++) {
+        int full = 1;
+        for (int x = 0; x < FIELD_WIDTH; x++) {
+            if (state->field[y][x] == 0) {
+                full = 0;
+                break;
+            }
+        }
+        if (full) {
+            linesCleared++;
+            for (int ty = y; ty > 0; ty--) {
+                for (int x = 0; x < FIELD_WIDTH; x++) {
+                    state->field[ty][x] = state->field[ty - 1][x];
+                }
+            }
+            for (int x = 0; x < FIELD_WIDTH; x++) {
+                state->field[0][x] = 0;
+            }
+        }
+    }
+    return linesCleared;
 }
 
-void hideCursor() {
-    printf("\033[?25l");
+void updateScore(GameState *state, int linesCleared) {
+    state->lines += linesCleared;
+    state->score += linesCleared * 100;
+    if (state->lines / 10 > state->level) state->level = state->lines / 10;
 }
 
-void showCursor() {
-    printf("\033[?25h");
+int generateRandomPiece(void) { return rand() % NUM_PIECES; }
+
+void processInput(GameState *state) {
+    int ch;
+
+    while ((ch = getchar()) != EOF) {
+        switch (ch) {
+            case 'a':
+            case 'A':
+                if (!collision(state, state->currentX - 1, state->currentY, state->currentPiece,
+                               state->currentRotation))
+                    state->currentX--;
+                break;
+            case 'd':
+            case 'D':
+                if (!collision(state, state->currentX + 1, state->currentY, state->currentPiece,
+                               state->currentRotation))
+                    state->currentX++;
+                break;
+            case 'w':
+            case 'W': {
+                int newRotation = (state->currentRotation + 1) % NUM_ROTATIONS;
+                if (!collision(state, state->currentX, state->currentY, state->currentPiece, newRotation))
+                    state->currentRotation = newRotation;
+                break;
+            }
+            case 's':
+            case 'S':
+                if (!collision(state, state->currentX, state->currentY + 1, state->currentPiece,
+                               state->currentRotation))
+                    state->currentY++;
+                break;
+            case ' ':
+
+                while (!collision(state, state->currentX, state->currentY + 1, state->currentPiece,
+                                  state->currentRotation)) {
+                    state->currentY++;
+                }
+                break;
+            default:
+                break;
+        }
+    }
+}
+
+void gameLoop(GameState *state) {
+    const useconds_t gameSpeed = 500000;
+    while (!state->gameOver) {
+        processInput(state);
+
+        if (!collision(state, state->currentX, state->currentY + 1, state->currentPiece,
+                       state->currentRotation)) {
+            state->currentY++;
+        } else {
+            lockPiece(state);
+            int linesCleared = clearLines(state);
+            updateScore(state, linesCleared);
+
+            state->currentPiece = state->nextPiece;
+            state->currentRotation = state->nextRotation;
+            state->currentX = FIELD_WIDTH / 2 - MATRIX_SIZE / 2;
+            state->currentY = 0;
+
+            state->nextPiece = generateRandomPiece();
+            state->nextRotation = 0;
+
+            if (collision(state, state->currentX, state->currentY, state->currentPiece,
+                          state->currentRotation)) {
+                state->gameOver = 1;
+            }
+        }
+
+        clearScreen();
+        drawStats(state);
+        drawNextPiece(state);
+        drawField(state);
+        drawHints();
+        drawFallingPiece(state);
+        fflush(stdout);
+        usleep(gameSpeed);
+    }
 }
 
 int main(void) {
+    struct termios orig_term, new_term;
+    tcgetattr(STDIN_FILENO, &orig_term);
+    new_term = orig_term;
+    new_term.c_lflag &= ~(ICANON | ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &new_term);
+    fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);
+
     hideCursor();
-    // Инициализируем игровое поле тестовыми данными:
-    memset(field, 0, sizeof(field));
-    for (int x = 0; x < FIELD_WIDTH; x++) {
-        field[FIELD_HEIGHT - 1][x] = (x % 2 == 0) ? 1 : 0;
-    }
-    field[10][3] = 1;
-    field[10][4] = 1;
-    field[11][4] = 1;
-    
-    // Сбрасываем позицию падающей фигуры
-    falling_piece = 1;      // T-тетромино
-    falling_rotation = 0;
-    falling_x = 3;
-    falling_y = 0;
-    
-    // Запускаем тестовую функцию падения
-    dropTest();
-    
-    // После завершения теста устанавливаем курсор вниз и ждём перед выходом
-    setCursorDown();
+    srand(time(NULL));
+
+    GameState game;
+    memset(&game, 0, sizeof(GameState));
+
+    game.currentPiece = generateRandomPiece();
+    game.currentRotation = 0;
+    game.currentX = FIELD_WIDTH / 2 - MATRIX_SIZE / 2;
+    game.currentY = 0;
+
+    game.nextPiece = generateRandomPiece();
+    game.nextRotation = 0;
+    game.gameOver = 0;
+
+    gameLoop(&game);
+
+    moveCursor(FIELD_ROW, FIELD_COL);
+    printf("Game Over!\n");
+    moveCursor(BOTTOM_ROW, 0);
+
     showCursor();
     fflush(stdout);
-    sleep(3);
-    
+
+    tcsetattr(STDIN_FILENO, TCSANOW, &orig_term);
+
     return 0;
 }
