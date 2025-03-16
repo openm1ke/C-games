@@ -263,11 +263,20 @@ int clearLines(GameState *state) {
 int computePoints(int linesCleared, int level) {
     int points = 0;
     switch (linesCleared) {
-        case 1: points = 40 * (level + 1); break;
-        case 2: points = 100 * (level + 1); break;
-        case 3: points = 300 * (level + 1); break;
-        case 4: points = 1200 * (level + 1); break;
-        default: break;
+        case 1:
+            points = 40 * (level + 1);
+            break;
+        case 2:
+            points = 100 * (level + 1);
+            break;
+        case 3:
+            points = 300 * (level + 1);
+            break;
+        case 4:
+            points = 1200 * (level + 1);
+            break;
+        default:
+            break;
     }
     return points;
 }
@@ -336,7 +345,7 @@ void processInput(GameState *state) {
 void gameLoop(GameState *state) {
     while (!state->gameOver) {
         processInput(state);
-        
+
         if (state->paused) {
             showGamePaused();
             usleep(10000);
