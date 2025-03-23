@@ -74,7 +74,10 @@ typedef struct {
 const char *level1_map[] = {"#######", "#.   .#", "#  B  #", "# B@B #", "#  B  #", "#.   .#", "#######"};
 const char *level2_map[] = {"########", "#.    .#", "#@BBBB #", "#.    .#", "########"};
 
-Level levels[] = {{7, 7, level1_map}, {5, 8, level2_map}};
+const char *level3_map[] = {"        ####", "#########  #", "#   # .....#", "# B . #    #", "## ####    #",
+                            "#     # ####", "#   #    B #", "######BBBB #", "     #@    #", "     #######"};
+
+Level levels[] = {{7, 7, level1_map}, {5, 8, level2_map}, {10, 12, level3_map}};
 int total_levels = sizeof(levels) / sizeof(Level);
 
 void clearScreen() { printf("\033[2J\033[H"); }

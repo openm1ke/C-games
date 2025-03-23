@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-Wextra -Werror -Wall
 
-FILES=snake pong game_of_life match_three stars tetris
+FILES=snake pong game_of_life match_three stars tetris sokoban
 
 all: $(FILES)
 
@@ -22,6 +22,9 @@ stars: clean stars.c
 
 tetris: clean tetris.c
 	$(CC) $(CFLAGS) tetris.c -o tetris && ./tetris
+
+sokoban: clean sokoban.c
+	$(CC) $(CFLAGS) sokoban.c -o sokoban && ./sokoban
 
 clean:
 	rm -rf *.o $(FILES)

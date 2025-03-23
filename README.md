@@ -5,6 +5,21 @@ Main rules:
 2) Only ASCII symbols
 3) Code-style and no-leaks
 ---
+
+
+### **Sokoban (1981)**
+
+> Sokoban is a classic Japanese puzzle game originally released in 1981 and designed by Hiroyuki Imabayashi. In this game, the player must push boxes around a warehouse and place them on designated target squares. Its simple yet challenging gameplay—where each move can determine whether the level remains solvable—has made it a staple of the puzzle genre, inspiring countless clones, sequels, and adaptations over the decades.
+
+![Sokoban](misc/sokoban.gif "Sokoban")
+
+###### Compile and execute:
+```bash
+make sokoban
+```
+
+---
+
 ### **Classic Tetris (1984)**
 
 > Tetris is one of the most iconic and influential video games ever created. Developed in 1984 by Russian software engineer Alexey Pajitnov, its simple yet captivating gameplay turned it into a global phenomenon. This project is an approximation of the original Tetris experience, faithfully implemented in C to capture the timeless essence of the classic game.
